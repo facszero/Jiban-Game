@@ -2,6 +2,10 @@
 
 Prototipo de acción 3D en Godot. Primera entrega técnica basada en el prompt maestro del proyecto: ingreso a una torre industrial de Bioron, disparos y cámaras intercambiables.
 
+## Versión para navegador
+
+Exportación web y controles táctiles iniciales preparados. Ver [activación de GitHub Pages](docs/WEB.md). El enlace del juego estará disponible cuando el propietario habilite Pages con GitHub Actions.
+
 ## Ejecutar en PC
 
 1. Descargar **Godot 4.5.1 Standard** (GDScript, sin .NET) desde https://godotengine.org/download/archive/4.5.1-stable/.

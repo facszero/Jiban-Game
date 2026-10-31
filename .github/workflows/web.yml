@@ -1,0 +1,61 @@
+name: Build browser demo
+on:
+  push:
+    branches: [codex/prototype-sector-01]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: jiban-web
+  cancel-in-progress: false
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.5.1 and web template
+        run: |
+          curl -fsSL --retry 3 https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_linux.x86_64.zip -o /tmp/godot.zip
+          echo '02ec53d1cc7dbb9cc6355393c61b9ab43d1244751a124f10248a4802830788cd  /tmp/godot.zip' | sha256sum -c -
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          chmod +x /tmp/godot/Godot_v4.5.1-stable_linux.x86_64
+          curl -fsSL --retry 3 https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_export_templates.tpz -o /tmp/templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.5.1.stable
+          unzip -j -q /tmp/templates.tpz 'templates/web_nothreads_*.zip' -d ~/.local/share/godot/export_templates/4.5.1.stable
+      - name: Validate and export
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT=/tmp/godot/Godot_v4.5.1-stable_linux.x86_64
+          "$GODOT" --headless --editor --import --quit 2>&1 | tee /tmp/import.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/import.log
+          timeout 90 "$GODOT" --headless --script res://tests/smoke.gd 2>&1 | tee /tmp/test.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/test.log
+          grep -q 'SMOKE RESULT: 0 failures' /tmp/test.log
+          timeout 30 "$GODOT" --headless --script res://tests/touch.gd 2>&1 | tee /tmp/touch.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/touch.log
+          mkdir -p exports/web
+          "$GODOT" --headless --export-release Web exports/web/index.html 2>&1 | tee /tmp/export.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/export.log
+          touch exports/web/.nojekyll
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jiban-browser-demo
+          path: exports/web/
+          include-hidden-files: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: exports/web/
+  deploy:
+    needs: export
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

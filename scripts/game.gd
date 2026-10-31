@@ -45,8 +45,10 @@ func _ready() -> void:
 	level.exit_terminal.activated.connect(on_exit)
 	level.spawn_enemy(Vector3(0, 0.1, -11))
 	create_hud()
+	add_child(preload("res://scripts/touch_controls.gd").new())
 	create_sound()
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if not OS.has_feature("web"):
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func setup_environment() -> void:
 	var world := WorldEnvironment.new()
@@ -144,6 +146,8 @@ func create_hud() -> void:
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 func _unhandled_input(event: InputEvent) -> void:
+	if OS.has_feature("web") and event is InputEventMouseButton and event.pressed and not get_tree().paused and not DisplayServer.is_touchscreen_available():
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	if event.is_action_pressed("pause_game") and player.health > 0.0 and not finished:
 		set_pause(not get_tree().paused)
 	if event.is_action_pressed("interact") and not get_tree().paused and is_instance_valid(target_terminal):
@@ -208,7 +212,8 @@ func set_pause(value: bool) -> void:
 	resume_button.visible = true
 	if value:
 		resume_button.grab_focus()
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if value else Input.MOUSE_MODE_CAPTURED
+	if not DisplayServer.is_touchscreen_available():
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if value else Input.MOUSE_MODE_CAPTURED
 
 func on_death() -> void:
 	set_pause(true)
