@@ -1,0 +1,24 @@
+name: Validate Godot prototype
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Godot
+        run: |
+          curl -fsSL https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_linux.x86_64.zip -o /tmp/godot.zip
+          echo '02ec53d1cc7dbb9cc6355393c61b9ab43d1244751a124f10248a4802830788cd  /tmp/godot.zip' | sha256sum -c -
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          chmod +x /tmp/godot/Godot_v4.5.1-stable_linux.x86_64
+      - name: Import and test
+        shell: bash
+        run: |
+          set -euo pipefail
+          /tmp/godot/Godot_v4.5.1-stable_linux.x86_64 --headless --path . --editor --import --quit 2>&1 | tee /tmp/import.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/import.log
+          timeout 90 /tmp/godot/Godot_v4.5.1-stable_linux.x86_64 --headless --path . --script res://tests/smoke.gd 2>&1 | tee /tmp/smoke.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/smoke.log
+          grep -q 'SMOKE RESULT: 0 failures' /tmp/smoke.log
