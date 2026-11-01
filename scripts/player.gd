@@ -70,7 +70,7 @@ func build_model() -> void:
 	var blue := Geo.material(Color(0.025, 0.07, 0.19), 0.7)
 	var black := Geo.material(Color(0.02, 0.027, 0.04), 0.45)
 	var red := Geo.material(Color(1.0, 0.02, 0.04), 0.4, 2.0)
-	Geo.box(body_model, Vector3(0, 1.25, 0), Vector3(0.72, 0.55, 0.36), silver)
+	Geo.box(body_model, Vector3(0, 1.25, 0), Vector3(0.66, 0.55, 0.36), silver)
 	Geo.box(body_model, Vector3(0, 1.3, -0.2), Vector3(0.52, 0.34, 0.06), blue)
 	Geo.box(body_model, Vector3(0, 1.3, 0.2), Vector3(0.52, 0.34, 0.06), blue)
 	Geo.box(body_model, Vector3(0, 0.91, 0), Vector3(0.5, 0.22, 0.3), black)
@@ -79,17 +79,36 @@ func build_model() -> void:
 	Geo.box(body_model, Vector3(0, 1.68, -0.15), Vector3(0.4, 0.19, 0.2), silver)
 	Geo.box(body_model, Vector3(0, 1.78, -0.25), Vector3(0.4, 0.055, 0.04), red)
 	Geo.box(body_model, Vector3(0, 1.97, -0.02), Vector3(0.13, 0.035, 0.35), silver)
+	# Rounded helmet dome, jaw vents, temple plates and police chest hardware.
+	Geo.ellipsoid(body_model, Vector3(0, 1.82, 0), Vector3(0.47, 0.42, 0.43), blue)
+	Geo.box(body_model, Vector3(0, 1.79, -0.253), Vector3(0.43, 0.045, 0.04), red)
+	Geo.box(body_model, Vector3(0, 1.62, -0.24), Vector3(0.18, 0.055, 0.07), black)
+	Geo.box(body_model, Vector3(0, 1.92, -0.21), Vector3(0.10, 0.09, 0.035), silver)
+	Geo.box(body_model, Vector3(0, 1.94, -0.235), Vector3(0.045, 0.025, 0.02), red)
+	for side in [-1, 1]:
+		Geo.ellipsoid(body_model, Vector3(side * 0.225, 1.76, 0), Vector3(0.065, 0.16, 0.2), silver)
+		Geo.box(body_model, Vector3(side * 0.29, 1.29, -0.22), Vector3(0.06, 0.37, 0.06), silver)
+		Geo.box(body_model, Vector3(side * 0.18, 1.35, 0.24), Vector3(0.04, 0.25, 0.045), silver)
+		for y in [0.94, 1.00, 1.06]:
+			Geo.box(body_model, Vector3(side * 0.18, y, -0.17), Vector3(0.12, 0.025, 0.04), silver)
+	Geo.box(body_model, Vector3(0, 0.84, -0.2), Vector3(0.16, 0.09, 0.06), blue)
+	Geo.box(body_model, Vector3(-0.15, 1.39, -0.24), Vector3(0.1, 0.1, 0.035), silver).rotation.z = PI / 4.0
+	for i in range(3):
+		Geo.box(body_model, Vector3(0.08 + i * 0.045, 1.19, -0.24), Vector3(0.025, 0.04, 0.02), red if i == 0 else silver)
+
 	for side in [-1, 1]:
 		var leg := Node3D.new()
 		body_model.add_child(leg)
 		leg.position = Vector3(side * 0.18, 0.8, 0)
-		Geo.box(leg, Vector3(0, -0.18, 0), Vector3(0.23, 0.32, 0.25), black)
+		Geo.ellipsoid(leg, Vector3(0, -0.18, 0), Vector3(0.25, 0.38, 0.28), blue)
+		Geo.ellipsoid(leg, Vector3(0, -0.37, -0.04), Vector3(0.27, 0.17, 0.3), silver)
 		Geo.box(leg, Vector3(0, -0.53, 0), Vector3(0.26, 0.35, 0.28), silver)
 		Geo.box(leg, Vector3(0, -0.72, -0.07), Vector3(0.28, 0.14, 0.43), black)
 		var arm := Node3D.new()
 		body_model.add_child(arm)
 		arm.position = Vector3(side * 0.47, 1.45, 0)
-		Geo.box(arm, Vector3(0, -0.06, 0), Vector3(0.29, 0.27, 0.33), silver)
+		Geo.ellipsoid(arm, Vector3(0, -0.06, 0), Vector3(0.32, 0.3, 0.36), silver)
+		Geo.box(arm, Vector3(side * 0.1, -0.07, 0), Vector3(0.08, 0.18, 0.29), blue)
 		Geo.box(arm, Vector3(0, -0.28, 0), Vector3(0.17, 0.25, 0.2), black)
 		Geo.box(arm, Vector3(0, -0.49, -0.05), Vector3(0.2, 0.24, 0.22), silver)
 		if side == -1:

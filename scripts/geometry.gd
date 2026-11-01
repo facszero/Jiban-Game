@@ -60,3 +60,25 @@ static func label(parent: Node3D, pos: Vector3, text: String, size: int = 48) ->
 	sign.pixel_size = 0.008
 	sign.modulate = Color(0.55, 0.8, 0.9)
 	return sign
+
+# Low-poly ellipsoids keep organic silhouettes inexpensive on mobile.
+static func ellipsoid(parent: Node3D, pos: Vector3, size: Vector3, mat: Material) -> MeshInstance3D:
+	var node := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.5
+	mesh.height = 1.0
+	mesh.radial_segments = 12
+	mesh.rings = 6
+	node.mesh = mesh
+	node.material_override = mat
+	parent.add_child(node)
+	node.position = pos
+	node.scale = size
+	return node
+
+static func link(parent: Node3D, start: Vector3, end: Vector3, radius: float, mat: Material) -> MeshInstance3D:
+	var node := cylinder(parent, (start + end) * 0.5, radius, start.distance_to(end), mat)
+	var axis := (end - start).normalized()
+	if absf(axis.dot(Vector3.UP)) < 0.999:
+		node.quaternion = Quaternion(Vector3.UP, axis)
+	return node

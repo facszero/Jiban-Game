@@ -47,6 +47,7 @@ func _ready() -> void:
 	create_hud()
 	add_child(preload("res://scripts/touch_controls.gd").new())
 	create_sound()
+	create_ambience()
 	if not OS.has_feature("web"):
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -57,7 +58,7 @@ func setup_environment() -> void:
 	environment.background_color = Color(0.005, 0.01, 0.025)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(0.45, 0.55, 0.7)
-	environment.ambient_light_energy = 0.9
+	environment.ambient_light_energy = 0.65
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	world.environment = environment
 	add_child(world)
@@ -65,7 +66,7 @@ func setup_environment() -> void:
 	add_child(fill)
 	fill.rotation_degrees = Vector3(-35, -25, 0)
 	fill.light_color = Color(0.6, 0.75, 1.0)
-	fill.light_energy = 1.1
+	fill.light_energy = 0.8
 
 func text_label(parent: Node, position: Vector2, size: int, color := Color(0.7, 0.85, 0.95)) -> Label:
 	var label := Label.new()
@@ -277,3 +278,27 @@ func create_sound() -> void:
 	add_child(audio)
 	audio.stream = sound
 	audio.volume_db = -12.0
+
+func create_ambience() -> void:
+	# Seamless original industrial hum; no recordings from the TV series.
+	var rate := 22050
+	var seconds := 4
+	var data := PackedByteArray()
+	data.resize(rate * seconds * 2)
+	for i in range(rate * seconds):
+		var t := float(i) / rate
+		var sample := sin(TAU * 55.0 * t) * 0.11 + sin(TAU * 82.5 * t) * 0.035
+		sample *= 0.8 + 0.2 * sin(TAU * 0.25 * t)
+		data.encode_s16(i * 2, int(sample * 32767))
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = rate
+	stream.data = data
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	stream.loop_end = rate * seconds
+	var hum := AudioStreamPlayer.new()
+	hum.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(hum)
+	hum.stream = stream
+	hum.volume_db = -24
+	hum.play()
