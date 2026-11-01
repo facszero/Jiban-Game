@@ -7,8 +7,8 @@ var leg_left: Node3D
 var leg_right: Node3D
 var elbows: Array[Node3D] = []
 var knees: Array[Node3D] = []
-var silver := metal(Color(.60,.67,.75),.45,.38)
-var navy := metal(Color(.018,.047,.105),.55,.3)
+var silver := metal(Color(.36,.40,.46),.65,.42)
+var navy := metal(Color(.018,.040,.085),.5,.38)
 var rubber := metal(Color(.013,.018,.025),.1,.62)
 var steel := metal(Color(.19,.24,.30),.65,.35)
 var gold := metal(Color(.76,.50,.12),.65,.3)
@@ -98,6 +98,11 @@ func build_torso() -> void:
 	shell(self,Vector3.ZERO,[Vector3(1.30,.16,.115),Vector3(1.36,.23,.145),Vector3(1.50,.265,.145),Vector3(1.60,.225,.12)],silver)
 	plate(self,Vector3(0,1.46,-.145),[Vector2(-.23,.12),Vector2(.23,.12),Vector2(.24,-.015),Vector2(.16,-.12),Vector2(-.16,-.12),Vector2(-.24,-.015)],.035,navy)
 	plate(self,Vector3(0,1.46,.145),[Vector2(-.20,.1),Vector2(.20,.1),Vector2(.23,-.04),Vector2(.13,-.13),Vector2(-.13,-.13),Vector2(-.23,-.04)],.028,silver).rotation.y=PI
+	plate(self,Vector3(0,1.55,.16),[Vector2(-.16,.025),Vector2(.16,.025),Vector2(.14,-.027),Vector2(-.14,-.027)],.008,navy).rotation.y=PI
+	for side in [-1,1]:
+		Geo.box(self,Vector3(side*.13,1.46,.174),Vector3(.007,.12,.006),steel)
+		for y in [1.40,1.52]:
+			Geo.box(self,Vector3(side*.18,y,.162),Vector3(.012,.012,.006),steel)
 	for i in range(4):
 		Geo.box(self,Vector3(0,1.49+i*.014,.178),Vector3(.085,.007,.008),rubber)
 		var y := 1.12+i*.053
@@ -132,13 +137,19 @@ func build_head() -> void:
 	plate(head,Vector3(0,.148,-.122),[Vector2(-.115,.018),Vector2(.115,.018),Vector2(.118,-.016),Vector2(-.118,-.016)],.008,silver)
 	plate(head,Vector3(0,.045,-.10),[Vector2(-.105,.04),Vector2(.105,.04),Vector2(.065,-.035),Vector2(.035,-.06),Vector2(-.035,-.06),Vector2(-.065,-.035)],.022,silver)
 	plate(head,Vector3(0,-.003,-.124),[Vector2(-.032,.017),Vector2(.032,.017),Vector2(.024,-.014),Vector2(-.024,-.014)],.009,steel)
+	Geo.box(head,Vector3(0,.031,-.124),Vector3(.003,.065,.003),steel)
+	for i in range(3):
+		Geo.box(head,Vector3(-.018+i*.018,-.004,-.135),Vector3(.008,.006,.004),rubber)
+	for side in [-1,1]:
+		plate(head,Vector3(side*.085,.035,-.089),[Vector2(-.014,.033),Vector2(.014,.033),Vector2(.01,-.03),Vector2(-.01,-.03)],.009,steel).rotation.y=side*.45
 	var crown := SurfaceTool.new()
 	crown.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for i in range(16):
-		var a := -PI*.48+PI*.96*i/16.0
-		var b := -PI*.48+PI*.96*(i+1)/16.0
-		var points := [Vector3(-.018,.155+cos(a)*.126,sin(a)*.121),Vector3(.018,.155+cos(a)*.126,sin(a)*.121),Vector3(.018,.155+cos(b)*.126,sin(b)*.121),Vector3(-.018,.155+cos(b)*.126,sin(b)*.121)]
-		for idx in [0,1,2,0,2,3]:
+	var profile := [Vector2(.14,-.126),Vector2(.17,-.123),Vector2(.23,-.110),Vector2(.267,-.072),Vector2(.282,-.016),Vector2(.282,.016),Vector2(.267,.072),Vector2(.23,.110),Vector2(.17,.123),Vector2(.14,.126)]
+	for i in range(profile.size()-1):
+		var a: Vector2=profile[i]
+		var b: Vector2=profile[i+1]
+		var points := [Vector3(-.018,a.x,a.y),Vector3(.018,a.x,a.y),Vector3(.018,b.x,b.y),Vector3(-.018,b.x,b.y)]
+		for idx in [0,2,1,0,3,2]:
 			crown.add_vertex(points[idx])
 	crown.generate_normals()
 	instance(head,Vector3.ZERO,crown.commit(),silver)
@@ -171,12 +182,8 @@ func build_arm(side: int) -> void:
 		arm_right=arm
 		var gun := joint(elbow,Vector3(0,-.34,-.025),"ServicePistol")
 		gun.rotation.x=PI/2
-		Geo.box(gun,Vector3(0,0,-.085),Vector3(.063,.067,.23),silver)
-		Geo.box(gun,Vector3(0,.039,-.09),Vector3(.045,.014,.20),navy)
-		Geo.box(gun,Vector3(0,-.055,-.005),Vector3(.042,.095,.047),rubber)
-		Geo.box(gun,Vector3(0,0,-.205),Vector3(.044,.043,.016),rubber)
-		Geo.box(gun,Vector3(.033,0,-.09),Vector3(.004,.012,.09),red)
-		Geo.box(gun,Vector3(0,-.04,-.08),Vector3(.025,.008,.075),steel)
+		var pistol = load("res://scripts/service_weapon.gd").new()
+		gun.add_child(pistol)
 func build_leg(side: int) -> void:
 	var leg := joint(self,Vector3(side*.12,.99,0),"LeftHip" if side<0 else "RightHip")
 	shell(leg,Vector3.ZERO,[Vector3(-.34,.072,.078),Vector3(-.25,.084,.088),Vector3(-.055,.098,.10),Vector3(0,.083,.083)],silver)
@@ -206,6 +213,16 @@ func animate(phase: float, movement: float, aiming: bool) -> void:
 	elbows[0].rotation.x=-.12-absf(stride)*.3
 	elbows[1].rotation.x=-.12
 func merge_parts(parent: Node3D) -> void:
+	# Geo.box uses an unanimated Node3D wrapper; bake that transform before batching.
+	for wrapper in parent.get_children():
+		if wrapper is Node3D and not wrapper is MeshInstance3D and wrapper.get_script() == null and wrapper.get_child_count() == 1 and wrapper.get_child(0) is MeshInstance3D:
+			var mesh: MeshInstance3D = wrapper.get_child(0)
+			var baked: Transform3D = wrapper.transform * mesh.transform
+			wrapper.remove_child(mesh)
+			parent.add_child(mesh)
+			mesh.transform = baked
+			parent.remove_child(wrapper)
+			wrapper.free()
 	var groups := {}
 	for child in parent.get_children():
 		if child is MeshInstance3D:
@@ -221,3 +238,4 @@ func merge_parts(parent: Node3D) -> void:
 			merge_parts(child)
 	for mat in groups:
 		instance(parent,Vector3.ZERO,groups[mat].commit(),mat)
+

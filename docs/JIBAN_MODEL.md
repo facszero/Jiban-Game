@@ -2,7 +2,7 @@
 
 El jugador y el estudio usan `scripts/jiban_model.gd`: perfiles de sección
 elíptica y placas biseladas, fusionados por material dentro de cada articulación.
-Aproximadamente 7.800 triángulos y 59 mallas. Es un presupuesto de geometría,
+Aproximadamente 8.400 triángulos y 34 mallas. Es un presupuesto de geometría,
 no una medición de FPS ni una garantía de rendimiento móvil.
 
 ## Revisión
@@ -35,3 +35,12 @@ articulaciones, giro táctil, zoom y conservación de la partida.
 El Galaxy A56 sigue como dispositivo objetivo provisional. El mínimo se
 confirmará después de medir FPS sostenidos, memoria y temperatura en equipo
 real; los renders de escritorio no sustituyen esa prueba.
+
+## Revisión 2
+
+Material plateado más oscuro y menos luz auxiliar sobre el jugador; detalles
+adicionales de casco y espalda. Pistola compartida entre primera y tercera
+persona, con guardamonte, miras, boca y empuñadura. La presentación en primera
+persona es más compacta. Las cajas estáticas se fusionan por material sin
+eliminar los pivotes animados. Sigue pendiente el acabado fino de texturas.
+

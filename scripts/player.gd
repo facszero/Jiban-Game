@@ -25,7 +25,7 @@ var arm_right: Node3D
 var leg_left: Node3D
 var leg_right: Node3D
 var view_weapon: Node3D
-const WEAPON_REST := Vector3(0.28, -0.24, -0.72)
+const WEAPON_REST := Vector3(0.23, -0.22, -0.77)
 var weapon_clearance := 1.0
 var weapon_probe := SphereShape3D.new()
 var flash: OmniLight3D
@@ -44,7 +44,7 @@ func _ready() -> void:
 	col.position.y = 0.95
 	add_child(col)
 	build_model()
-	Geo.light(self, Vector3(0, 2.4, 2.0), Color(0.65, 0.78, 1.0), 1.4, 7.0)
+	Geo.light(self, Vector3(0, 2.4, 2.0), Color(0.75, 0.82, 1.0), 0.65, 7.0)
 	pivot = Node3D.new()
 	pivot.position.y = 1.72
 	add_child(pivot)
@@ -230,26 +230,7 @@ func take_damage(amount: float) -> void:
 
 
 func build_view_weapon() -> void:
-	var silver := Geo.material(Color(0.46, 0.53, 0.61), 0.85)
-	var dark := Geo.material(Color(0.025, 0.04, 0.065), 0.5)
-	var blue := Geo.material(Color(0.035, 0.10, 0.22), 0.6)
-	var red := Geo.material(Color(0.8, 0.03, 0.015), 0.2, 0.8)
-	# Farther from the eye and lower in frame; an identifiable receiver and grip.
 	view_weapon.position = WEAPON_REST
-	Geo.armor(view_weapon, Vector3(0, 0, 0), Vector3(0.12, 0.3, 0.095), silver, 0.85).rotation.x = PI / 2.0
-	Geo.box(view_weapon, Vector3(0, 0.05, -0.03), Vector3(0.085, 0.025, 0.24), blue)
-	Geo.box(view_weapon, Vector3(0, -0.085, 0.09), Vector3(0.08, 0.14, 0.085), dark).rotation.x = -0.2
-	Geo.box(view_weapon, Vector3(0, -0.07, 0), Vector3(0.065, 0.015, 0.095), silver)
-	Geo.box(view_weapon, Vector3(0, -0.04, -0.045), Vector3(0.065, 0.07, 0.015), silver)
-	Geo.box(view_weapon, Vector3(0, 0.005, -0.17), Vector3(0.08, 0.065, 0.055), dark)
-	Geo.box(view_weapon, Vector3(0, 0.005, -0.2), Vector3(0.045, 0.034, 0.012), black_muzzle())
-	Geo.box(view_weapon, Vector3(0, 0.078, -0.11), Vector3(0.018, 0.025, 0.025), red)
-	for i in range(4):
-		Geo.box(view_weapon, Vector3(0.056, 0.008, -0.08 + i * 0.045), Vector3(0.006, 0.035, 0.012), dark)
-	Geo.ellipsoid(view_weapon, Vector3(0, -0.12, 0.13), Vector3(0.12, 0.11, 0.13), dark)
-	Geo.armor(view_weapon, Vector3(0.015, -0.21, 0.17), Vector3(0.15, 0.14, 0.16), silver)
-
-func black_muzzle() -> Material:
-	return Geo.material(Color(0.004, 0.006, 0.009))
-
-
+	var pistol := preload("res://scripts/service_weapon.gd").new()
+	pistol.include_hand = true
+	view_weapon.add_child(pistol)

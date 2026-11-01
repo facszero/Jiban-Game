@@ -162,7 +162,7 @@ func create_hud() -> void:
 	sensitivity.value_changed.connect(func(value): player.sensitivity = value)
 	var subtitle := Label.new()
 	menu.add_child(subtitle)
-	subtitle.text = "Sensibilidad del ratón\nModelo Jiban · revisión 1 · animación provisional"
+	subtitle.text = "Sensibilidad del ratón\nModelo Jiban · revisión 2 · animación provisional"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -344,3 +344,4 @@ func open_model_review() -> void:
 		touch_controls.set_process_input(true)
 		touch_controls.set_process_unhandled_input(true)
 	)
+

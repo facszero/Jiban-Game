@@ -55,7 +55,7 @@ func _ready() -> void:
 	var title := Label.new()
 	frame.add_child(title)
 	title.position=Vector2(30,24)
-	title.text="JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · primera revisión"
+	title.text="JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 2"
 	title.add_theme_font_size_override("font_size",23)
 	title.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	var exit_button := Button.new()
@@ -139,3 +139,4 @@ func _input(event: InputEvent) -> void:
 func close() -> void:
 	closed.emit()
 	queue_free()
+
