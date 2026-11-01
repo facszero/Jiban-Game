@@ -34,6 +34,9 @@ jobs:
           grep -q 'SMOKE RESULT: 0 failures' /tmp/test.log
           timeout 30 "$GODOT" --headless --script res://tests/touch.gd 2>&1 | tee /tmp/touch.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/touch.log
+          timeout 30 "$GODOT" --headless --script res://tests/model.gd 2>&1 | tee /tmp/model.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/model.log
+          grep -q 'MODEL RESULT: 0 failures' /tmp/model.log
           mkdir -p exports/web
           "$GODOT" --headless --export-release Web exports/web/index.html 2>&1 | tee /tmp/export.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/export.log
@@ -60,3 +63,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+

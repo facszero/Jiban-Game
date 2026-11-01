@@ -67,78 +67,12 @@ func _ready() -> void:
 	update_camera(1.0)
 
 func build_model() -> void:
-	body_model = Node3D.new()
+	body_model = preload("res://scripts/jiban_model.gd").new()
 	add_child(body_model)
-	var silver := Geo.material(Color(0.48, 0.59, 0.7), 0.85)
-	var blue := Geo.material(Color(0.025, 0.07, 0.19), 0.7)
-	var black := Geo.material(Color(0.02, 0.027, 0.04), 0.45)
-	var red := Geo.material(Color(1.0, 0.02, 0.04), 0.4, 2.0)
-	Geo.armor(body_model, Vector3(0, 1.25, 0), Vector3(0.72, 0.5, 0.42), silver, 0.68)
-	Geo.box(body_model, Vector3(0, 1.3, -0.2), Vector3(0.40, 0.29, 0.045), blue)
-	Geo.box(body_model, Vector3(0, 1.3, 0.2), Vector3(0.40, 0.29, 0.045), blue)
-	Geo.box(body_model, Vector3(0, 0.91, 0), Vector3(0.5, 0.22, 0.3), black)
-	Geo.box(body_model, Vector3(0, 0.84, 0), Vector3(0.57, 0.1, 0.35), silver)
-	Geo.ellipsoid(body_model, Vector3(0, 1.75, 0), Vector3(0.46, 0.45, 0.42), blue)
-	Geo.box(body_model, Vector3(0, 1.68, -0.15), Vector3(0.4, 0.19, 0.2), silver)
-	Geo.box(body_model, Vector3(0, 1.78, -0.25), Vector3(0.4, 0.055, 0.04), red)
-	Geo.box(body_model, Vector3(0, 1.97, -0.02), Vector3(0.13, 0.035, 0.35), silver)
-	# Rounded helmet dome, jaw vents, temple plates and police chest hardware.
-	Geo.ellipsoid(body_model, Vector3(0, 1.82, 0), Vector3(0.47, 0.42, 0.43), blue)
-	Geo.box(body_model, Vector3(0, 1.79, -0.253), Vector3(0.43, 0.045, 0.04), red)
-	Geo.box(body_model, Vector3(0, 1.62, -0.24), Vector3(0.18, 0.055, 0.07), black)
-	Geo.box(body_model, Vector3(0, 1.92, -0.21), Vector3(0.10, 0.09, 0.035), silver)
-	Geo.box(body_model, Vector3(0, 1.94, -0.235), Vector3(0.045, 0.025, 0.02), red)
-	for side in [-1, 1]:
-		Geo.ellipsoid(body_model, Vector3(side * 0.225, 1.76, 0), Vector3(0.065, 0.16, 0.2), silver)
-		Geo.box(body_model, Vector3(side * 0.29, 1.29, -0.22), Vector3(0.06, 0.37, 0.06), silver)
-		Geo.box(body_model, Vector3(side * 0.16, 1.32, 0.225), Vector3(0.025, 0.22, 0.025), silver)
-		for y in [0.94, 1.00, 1.06]:
-			Geo.box(body_model, Vector3(side * 0.18, y, -0.17), Vector3(0.12, 0.025, 0.04), silver)
-	Geo.box(body_model, Vector3(0, 0.84, -0.2), Vector3(0.16, 0.09, 0.06), blue)
-	Geo.box(body_model, Vector3(-0.15, 1.39, -0.24), Vector3(0.1, 0.1, 0.035), silver).rotation.z = PI / 4.0
-	for i in range(3):
-		Geo.box(body_model, Vector3(0.08 + i * 0.045, 1.19, -0.24), Vector3(0.025, 0.04, 0.02), red if i == 0 else silver)
-
-	for side in [-1, 1]:
-		var leg := Node3D.new()
-		body_model.add_child(leg)
-		leg.position = Vector3(side * 0.17, 1.0, 0)
-		leg.scale = Vector3(0.95, 1.25, 0.95)
-		Geo.ellipsoid(leg, Vector3(0, -0.18, 0), Vector3(0.25, 0.38, 0.28), blue)
-		Geo.ellipsoid(leg, Vector3(0, -0.37, -0.04), Vector3(0.27, 0.17, 0.3), silver)
-		Geo.armor(leg, Vector3(0, -0.53, 0), Vector3(0.25, 0.35, 0.29), silver, 0.68)
-		Geo.ellipsoid(leg, Vector3(0, -0.72, -0.055), Vector3(0.25, 0.16, 0.36), black)
-		var arm := Node3D.new()
-		body_model.add_child(arm)
-		arm.position = Vector3(side * 0.43, 1.53, 0)
-		arm.scale = Vector3(0.9, 1.06, 0.9)
-		Geo.ellipsoid(arm, Vector3(0, -0.06, 0), Vector3(0.28, 0.23, 0.34), silver)
-		Geo.box(arm, Vector3(side * 0.1, -0.07, 0), Vector3(0.08, 0.18, 0.29), blue)
-		Geo.box(arm, Vector3(0, -0.28, 0), Vector3(0.17, 0.25, 0.2), black)
-		Geo.ellipsoid(arm, Vector3(0, -0.49, -0.05), Vector3(0.21, 0.28, 0.23), silver)
-		Geo.ellipsoid(arm, Vector3(0, -0.65, -0.06), Vector3(0.16, 0.17, 0.18), black)
-		if side == -1:
-			leg_left = leg
-			arm_left = arm
-		else:
-			leg_right = leg
-			arm_right = arm
-	Geo.box(arm_right, Vector3(0, -0.65, -0.15), Vector3(0.13, 0.17, 0.46), silver)
-
-	# Raise the waist/hips and reduce the helmet to an adult heroic silhouette.
-	# The collision capsule and camera stay stable; only visual geometry changes.
-	for part in body_model.get_children():
-		if part == leg_left or part == leg_right or part == arm_left or part == arm_right:
-			continue
-		if part.position.y > 1.57:
-			part.position = Vector3(0, 1.83, 0) + (part.position - Vector3(0, 1.8, 0)) * 0.8
-			part.scale *= 0.8
-		elif part.position.y < 1.1:
-			part.position.y += 0.16
-		else:
-			part.position.y += 0.08
-	Geo.cylinder(body_model, Vector3(0, 1.64, 0), 0.105, 0.13, black)
-	Geo.ellipsoid(body_model, Vector3(0, 0.97, 0), Vector3(0.43, 0.28, 0.3), blue)
+	arm_left = body_model.arm_left
+	arm_right = body_model.arm_right
+	leg_left = body_model.leg_left
+	leg_right = body_model.leg_right
 
 func _unhandled_input(event: InputEvent) -> void:
 	if health <= 0.0 or get_tree().paused:
@@ -186,11 +120,7 @@ func _physics_process(delta: float) -> void:
 	if global_position.y < -12.0:
 		take_damage(999.0)
 	step_clock += Vector2(velocity.x, velocity.z).length() * delta * 2.2
-	var stride := sin(step_clock) * minf(axis.length(), 1.0) * 0.4
-	leg_left.rotation.x = stride
-	leg_right.rotation.x = -stride
-	arm_left.rotation.x = -stride * 0.5
-	arm_right.rotation.x = -1.35 if Input.is_action_pressed("aim") or Input.is_action_pressed("fire") else stride * 0.4
+	body_model.animate(step_clock, minf(axis.length(), 1.0), Input.is_action_pressed("aim") or Input.is_action_pressed("fire"))
 	update_camera(delta)
 	if Input.is_action_pressed("fire"):
 		shoot()
@@ -321,4 +251,5 @@ func build_view_weapon() -> void:
 
 func black_muzzle() -> Material:
 	return Geo.material(Color(0.004, 0.006, 0.009))
+
 

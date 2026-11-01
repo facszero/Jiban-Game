@@ -25,6 +25,8 @@ var notice := "BIORON // Señal de Giba detectada"
 var notice_time := 5.0
 var audio: AudioStreamPlayer
 var sound: AudioStreamWAV
+var model_review: CanvasLayer
+var touch_controls: CanvasLayer
 var phase_events := [false, false, false]
 
 func _ready() -> void:
@@ -45,7 +47,8 @@ func _ready() -> void:
 	level.exit_terminal.activated.connect(on_exit)
 	level.spawn_enemy(Vector3(0, 0.1, -11))
 	create_hud()
-	add_child(preload("res://scripts/touch_controls.gd").new())
+	touch_controls = preload("res://scripts/touch_controls.gd").new()
+	add_child(touch_controls)
 	create_sound()
 	create_ambience()
 	if not OS.has_feature("web"):
@@ -144,6 +147,11 @@ func create_hud() -> void:
 	menu.add_child(restart)
 	restart.text = "REINICIAR DESDE PUNTO DE CONTROL"
 	restart.pressed.connect(restart_checkpoint)
+	var review_button := Button.new()
+	menu.add_child(review_button)
+	review_button.text = "VER MODELO 3D DE JIBAN"
+	review_button.custom_minimum_size.y = 48
+	review_button.pressed.connect(open_model_review)
 	var sensitivity := HSlider.new()
 	menu.add_child(sensitivity)
 	sensitivity.min_value = 0.001
@@ -154,10 +162,12 @@ func create_hud() -> void:
 	sensitivity.value_changed.connect(func(value): player.sensitivity = value)
 	var subtitle := Label.new()
 	menu.add_child(subtitle)
-	subtitle.text = "Sensibilidad del ratón\nPrototipo 0.1 · geometría y animación provisionales"
+	subtitle.text = "Sensibilidad del ratón\nModelo Jiban · revisión 1 · animación provisional"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 func _unhandled_input(event: InputEvent) -> void:
+	if is_instance_valid(model_review):
+		return
 	if OS.has_feature("web") and event is InputEventMouseButton and event.pressed and not get_tree().paused and not DisplayServer.is_touchscreen_available():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	if event.is_action_pressed("pause_game") and player.health > 0.0 and not finished:
@@ -313,3 +323,24 @@ func create_ambience() -> void:
 	hum.stream = stream
 	hum.volume_db = -24
 	hum.play()
+
+
+func open_model_review() -> void:
+	if is_instance_valid(model_review):
+		return
+	if not get_tree().paused:
+		set_pause(true)
+	# Release held touch actions before switching to the independent studio.
+	touch_controls._notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
+	touch_controls.hide()
+	touch_controls.set_process_input(false)
+	touch_controls.set_process_unhandled_input(false)
+	model_review = preload("res://scripts/model_review.gd").new()
+	add_child(model_review)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	model_review.closed.connect(func():
+		model_review = null
+		touch_controls.show()
+		touch_controls.set_process_input(true)
+		touch_controls.set_process_unhandled_input(true)
+	)
