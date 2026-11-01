@@ -67,6 +67,13 @@ func run() -> void:
 	player.cooldown = 0.0
 	player.shoot()
 	check(target.health == old_health, "Wall blocks weapon damage")
+	# Reuse the shot budget: the close wall crosses the body-to-muzzle segment.
+	wall.position.z = 3.7
+	await frames(3)
+	player.ammo += 1
+	player.cooldown = 0.0
+	player.shoot()
+	check(target.health == old_health, "Close wall blocks a muzzle extending beyond it")
 	wall.free()
 	player.reload_weapon()
 	await frames(80)
@@ -93,6 +100,15 @@ func run() -> void:
 	player.first_person = true
 	await frames(5)
 	check(game.target_terminal == game.level.terminals[0], "Nearby aimed terminal is interactable")
+	# Reproduce the mobile screenshot: stand against the terminal, looking down.
+	player.position = Vector3(-4, 0.05, -14.35)
+	player.pitch = -0.35
+	await frames(3)
+	check(player.weapon_clearance < 0.65 and not player.view_weapon.visible, "Weapon withdraws at terminal contact")
+	player.position = Vector3(-4, 0.05, -12.1)
+	player.pitch = -0.2
+	await frames(20)
+	check(player.weapon_clearance > 0.99 and player.view_weapon.visible, "Weapon returns after leaving terminal")
 	var action := InputEventAction.new()
 	action.action = "interact"
 	action.pressed = true
@@ -124,3 +140,4 @@ func run() -> void:
 	game.queue_free()
 	await process_frame
 	quit(1 if failures else 0)
+

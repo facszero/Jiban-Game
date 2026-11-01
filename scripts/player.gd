@@ -25,6 +25,9 @@ var arm_right: Node3D
 var leg_left: Node3D
 var leg_right: Node3D
 var view_weapon: Node3D
+const WEAPON_REST := Vector3(0.28, -0.24, -0.72)
+var weapon_clearance := 1.0
+var weapon_probe := SphereShape3D.new()
 var flash: OmniLight3D
 var step_clock := 0.0
 var lamp: SpotLight3D
@@ -223,10 +226,36 @@ func update_camera(delta: float) -> void:
 			aim_point = aim_hit.position
 		if camera.global_position.distance_squared_to(aim_point) > 0.01:
 			camera.look_at(aim_point, Vector3.UP)
+	update_weapon_clearance(delta)
 	camera.fov = lerpf(camera.fov, 60.0 if Input.is_action_pressed("aim") else 76.0, minf(1.0, delta * 12.0))
+
+func update_weapon_clearance(delta: float) -> void:
+	if not first_person:
+		view_weapon.visible = false
+		return
+	# A swept volume covers barrel, receiver and hand, including off-centre obstacles.
+	weapon_probe.radius = 0.28
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = weapon_probe
+	query.transform = Transform3D(Basis.IDENTITY, camera.global_position)
+	query.collision_mask = 5
+	query.exclude = [get_rid()]
+	var space := get_world_3d().direct_space_state
+	var safe := 0.0
+	if space.intersect_shape(query, 1).is_empty():
+		query.motion = camera.global_basis * Vector3(0.28, -0.30, -0.74)
+		var fractions := space.cast_motion(query)
+		safe = 1.0 if fractions[0] >= 1.0 else maxf(0.0, fractions[0] - 0.08)
+	# Retreat immediately to prevent a one-frame intersection; ease back out.
+	weapon_clearance = minf(safe, move_toward(weapon_clearance, safe, delta * 5.0))
+	view_weapon.position = WEAPON_REST * weapon_clearance
+	view_weapon.scale = Vector3.ONE * maxf(weapon_clearance, 0.01)
+	# At contact, lower the weapon out of view instead of displaying a clipped mesh.
+	view_weapon.visible = weapon_clearance >= 0.65
 
 func ray(from: Vector3, to: Vector3, mask: int = 5) -> Dictionary:
 	var query := PhysicsRayQueryParameters3D.create(from, to, mask, [get_rid()])
+	query.hit_from_inside = true
 	return get_world_3d().direct_space_state.intersect_ray(query)
 
 func shoot() -> void:
@@ -243,7 +272,12 @@ func shoot() -> void:
 		target = aim_hit.position
 	# Resolve damage from the same body muzzle in either perspective, so walls block it.
 	var muzzle := global_position + global_basis * Vector3(0.32, 1.45, -0.5)
-	var hit := ray(muzzle, target + (target - muzzle).normalized() * 0.05)
+	# The muzzle can extend beyond a close surface even though the body cannot.
+	var hit := ray(pivot.global_position, muzzle, 1)
+	if not hit.is_empty():
+		muzzle = pivot.global_position
+	else:
+		hit = ray(muzzle, target + (target - muzzle).normalized() * 0.05)
 	if not hit.is_empty():
 		target = hit.position
 		if hit.collider.has_method("take_damage"):
@@ -271,7 +305,7 @@ func build_view_weapon() -> void:
 	var blue := Geo.material(Color(0.035, 0.10, 0.22), 0.6)
 	var red := Geo.material(Color(0.8, 0.03, 0.015), 0.2, 0.8)
 	# Farther from the eye and lower in frame; an identifiable receiver and grip.
-	view_weapon.position = Vector3(0.28, -0.24, -0.72)
+	view_weapon.position = WEAPON_REST
 	Geo.armor(view_weapon, Vector3(0, 0, 0), Vector3(0.12, 0.3, 0.095), silver, 0.85).rotation.x = PI / 2.0
 	Geo.box(view_weapon, Vector3(0, 0.05, -0.03), Vector3(0.085, 0.025, 0.24), blue)
 	Geo.box(view_weapon, Vector3(0, -0.085, 0.09), Vector3(0.08, 0.14, 0.085), dark).rotation.x = -0.2
@@ -287,3 +321,4 @@ func build_view_weapon() -> void:
 
 func black_muzzle() -> Material:
 	return Geo.material(Color(0.004, 0.006, 0.009))
+
