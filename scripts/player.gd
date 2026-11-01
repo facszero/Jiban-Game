@@ -75,7 +75,7 @@ func build_model() -> void:
 	Geo.box(body_model, Vector3(0, 1.3, 0.2), Vector3(0.52, 0.34, 0.06), blue)
 	Geo.box(body_model, Vector3(0, 0.91, 0), Vector3(0.5, 0.22, 0.3), black)
 	Geo.box(body_model, Vector3(0, 0.84, 0), Vector3(0.57, 0.1, 0.35), silver)
-	Geo.cylinder(body_model, Vector3(0, 1.75, 0), 0.24, 0.41, blue)
+	Geo.ellipsoid(body_model, Vector3(0, 1.75, 0), Vector3(0.46, 0.45, 0.42), blue)
 	Geo.box(body_model, Vector3(0, 1.68, -0.15), Vector3(0.4, 0.19, 0.2), silver)
 	Geo.box(body_model, Vector3(0, 1.78, -0.25), Vector3(0.4, 0.055, 0.04), red)
 	Geo.box(body_model, Vector3(0, 1.97, -0.02), Vector3(0.13, 0.035, 0.35), silver)
@@ -99,18 +99,21 @@ func build_model() -> void:
 	for side in [-1, 1]:
 		var leg := Node3D.new()
 		body_model.add_child(leg)
-		leg.position = Vector3(side * 0.18, 0.8, 0)
+		leg.position = Vector3(side * 0.17, 1.0, 0)
+		leg.scale = Vector3(0.95, 1.25, 0.95)
 		Geo.ellipsoid(leg, Vector3(0, -0.18, 0), Vector3(0.25, 0.38, 0.28), blue)
 		Geo.ellipsoid(leg, Vector3(0, -0.37, -0.04), Vector3(0.27, 0.17, 0.3), silver)
 		Geo.box(leg, Vector3(0, -0.53, 0), Vector3(0.26, 0.35, 0.28), silver)
 		Geo.box(leg, Vector3(0, -0.72, -0.07), Vector3(0.28, 0.14, 0.43), black)
 		var arm := Node3D.new()
 		body_model.add_child(arm)
-		arm.position = Vector3(side * 0.47, 1.45, 0)
+		arm.position = Vector3(side * 0.43, 1.53, 0)
+		arm.scale = Vector3(0.9, 1.06, 0.9)
 		Geo.ellipsoid(arm, Vector3(0, -0.06, 0), Vector3(0.32, 0.3, 0.36), silver)
 		Geo.box(arm, Vector3(side * 0.1, -0.07, 0), Vector3(0.08, 0.18, 0.29), blue)
 		Geo.box(arm, Vector3(0, -0.28, 0), Vector3(0.17, 0.25, 0.2), black)
-		Geo.box(arm, Vector3(0, -0.49, -0.05), Vector3(0.2, 0.24, 0.22), silver)
+		Geo.ellipsoid(arm, Vector3(0, -0.49, -0.05), Vector3(0.21, 0.28, 0.23), silver)
+		Geo.ellipsoid(arm, Vector3(0, -0.65, -0.06), Vector3(0.16, 0.17, 0.18), black)
 		if side == -1:
 			leg_left = leg
 			arm_left = arm
@@ -118,6 +121,21 @@ func build_model() -> void:
 			leg_right = leg
 			arm_right = arm
 	Geo.box(arm_right, Vector3(0, -0.65, -0.15), Vector3(0.13, 0.17, 0.46), silver)
+
+	# Raise the waist/hips and reduce the helmet to an adult heroic silhouette.
+	# The collision capsule and camera stay stable; only visual geometry changes.
+	for part in body_model.get_children():
+		if part == leg_left or part == leg_right or part == arm_left or part == arm_right:
+			continue
+		if part.position.y > 1.57:
+			part.position = Vector3(0, 1.83, 0) + (part.position - Vector3(0, 1.8, 0)) * 0.8
+			part.scale *= 0.8
+		elif part.position.y < 1.1:
+			part.position.y += 0.16
+		else:
+			part.position.y += 0.08
+	Geo.cylinder(body_model, Vector3(0, 1.64, 0), 0.105, 0.13, black)
+	Geo.ellipsoid(body_model, Vector3(0, 0.97, 0), Vector3(0.43, 0.28, 0.3), blue)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if health <= 0.0 or get_tree().paused:

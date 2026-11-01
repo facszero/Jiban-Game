@@ -77,6 +77,7 @@ func text_label(parent: Node, position: Vector2, size: int, color := Color(0.7, 
 	return label
 
 func create_hud() -> void:
+	var touch := DisplayServer.is_touchscreen_available() or OS.has_feature("mobile") or OS.has_environment("JIBAN_TOUCH_PREVIEW")
 	var canvas := CanvasLayer.new()
 	add_child(canvas)
 	var frame := Control.new()
@@ -104,12 +105,22 @@ func create_hud() -> void:
 			health_bar = bar
 		else:
 			energy_bar = bar
-	objective_label = text_label(frame, Vector2(650, 28), 19)
+	objective_label = text_label(frame, Vector2(620, 25), 18)
+	objective_label.size = Vector2(490, 75)
+	objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var reticle := text_label(frame, Vector2(630, 343), 26, Color(0.7, 0.95, 1, 0.85))
 	reticle.text = "+"
-	hint = text_label(frame, Vector2(30, 605), 19)
-	ammo_label = text_label(frame, Vector2(920, 610), 24)
+	hint = text_label(frame, Vector2(320, 545) if touch else Vector2(30, 605), 19)
+	if touch:
+		hint.size = Vector2(620, 55)
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	ammo_label = text_label(frame, Vector2(440, 610) if touch else Vector2(920, 610), 22)
+	if touch:
+		ammo_label.size = Vector2(400, 60)
+		ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var controls := text_label(frame, Vector2(30, 680), 15, Color(0.4, 0.6, 0.7))
+	controls.visible = not touch
 	controls.text = "WASD Mover   ·   Ratón Apuntar   ·   V Cámara   ·   E Terminal   ·   R Recargar   ·   F Linterna   ·   Esc Pausa"
 	overlay = ColorRect.new()
 	frame.add_child(overlay)

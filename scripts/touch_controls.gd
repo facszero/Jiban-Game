@@ -11,7 +11,7 @@ func _ready() -> void:
 	layer = 5
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	player = get_tree().get_first_node_in_group("player")
-	var active := force_visible or DisplayServer.is_touchscreen_available() or OS.has_feature("mobile")
+	var active := force_visible or OS.has_environment("JIBAN_TOUCH_PREVIEW") or DisplayServer.is_touchscreen_available() or OS.has_feature("mobile")
 	if not active:
 		return
 	var layout := Node2D.new()
@@ -35,17 +35,25 @@ func _ready() -> void:
 			points.append(Vector2.from_angle(TAU * i / 32.0) * 38)
 		disc.polygon = points
 		disc.color = Color(0.06, 0.22, 0.32, 0.75)
-		var label := Label.new()
-		button.add_child(label)
-		label.position = Vector2(-38, -13)
-		label.size = Vector2(76, 26)
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.add_theme_font_size_override("font_size", 16)
-		label.text = entry[1]
-		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if entry[0] in ["forward", "back", "left", "right"]:
+			var arrow := Polygon2D.new()
+			button.add_child(arrow)
+			arrow.polygon = PackedVector2Array([Vector2(0, -20), Vector2(18, -2), Vector2(7, -2), Vector2(7, 18), Vector2(-7, 18), Vector2(-7, -2), Vector2(-18, -2)])
+			arrow.color = Color(0.8, 0.94, 1.0)
+			arrow.rotation = {"forward": 0.0, "right": PI / 2.0, "back": PI, "left": -PI / 2.0}[entry[0]]
+		else:
+			var label := Label.new()
+			button.add_child(label)
+			label.position = Vector2(-38, -13)
+			label.size = Vector2(76, 26)
+			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			label.add_theme_font_size_override("font_size", 16)
+			label.text = entry[1]
+			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
 	var help := Label.new()
 	layout.add_child(help)
-	help.position = Vector2(400, 640)
+	help.position = Vector2(430, 680)
 	help.text = "Arrastrá el centro/derecha para mirar"
 	var scale_layout := func():
 		var viewport := get_viewport().get_visible_rect().size
