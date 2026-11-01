@@ -82,3 +82,19 @@ static func link(parent: Node3D, start: Vector3, end: Vector3, radius: float, ma
 	if absf(axis.dot(Vector3.UP)) < 0.999:
 		node.quaternion = Quaternion(Vector3.UP, axis)
 	return node
+
+
+# Eight-sided tapered armor: bevelled outline without texture or shader cost.
+static func armor(parent: Node3D, pos: Vector3, size: Vector3, mat: Material, bottom: float = 0.75) -> MeshInstance3D:
+	var node := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 1.0
+	mesh.bottom_radius = bottom
+	mesh.height = 1.0
+	mesh.radial_segments = 8
+	node.mesh = mesh
+	node.material_override = mat
+	parent.add_child(node)
+	node.position = pos
+	node.scale = Vector3(size.x * 0.5, size.y, size.z * 0.5)
+	return node

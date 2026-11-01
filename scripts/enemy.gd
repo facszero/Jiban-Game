@@ -38,7 +38,7 @@ func _ready() -> void:
 func build_creature() -> void:
 	# Reference-based low-poly adaptations; no ripped textures or meshes.
 	var dark := Geo.material(Color(0.045, 0.055, 0.065), 0.25)
-	var pale := Geo.material(Color(0.7, 0.8, 0.7), 0.25)
+	var pale := Geo.material(Color(0.46, 0.51, 0.36), 0.25)
 	var skin := Geo.material(Color(0.19, 0.31, 0.24), 0.1)
 	var wine := Geo.material(Color(0.28, 0.08, 0.09), 0.1)
 	var body_mat := wine if heavy else dark
@@ -47,12 +47,14 @@ func build_creature() -> void:
 	Geo.ellipsoid(model, Vector3(0, 1.65, 0), Vector3(0.45, 0.5, 0.4), skin if heavy else dark)
 	if heavy:
 		# Chamelenoid: tall central crest, pale orbital rings, burgundy shoulders.
-		Geo.ellipsoid(model, Vector3(0, 1.92, 0.01), Vector3(0.14, 0.5, 0.3), skin)
+		Geo.ellipsoid(model, Vector3(0, 1.92, 0.01), Vector3(0.12, 0.37, 0.29), skin)
 		for side in [-1, 1]:
-			Geo.ellipsoid(model, Vector3(side * 0.155, 1.7, -0.17), Vector3(0.19, 0.26, 0.095), pale)
-			Geo.ellipsoid(model, Vector3(side * 0.16, 1.72, -0.222), Vector3(0.075, 0.11, 0.045), dark)
+			Geo.ellipsoid(model, Vector3(side * 0.145, 1.69, -0.165), Vector3(0.15, 0.21, 0.035), pale)
+			Geo.ellipsoid(model, Vector3(side * 0.145, 1.7, -0.191), Vector3(0.07, 0.085, 0.02), dark)
+			Geo.link(model, Vector3(side * 0.07, 1.75, -0.19), Vector3(side * 0.22, 1.8, -0.16), 0.04, skin)
+			Geo.ellipsoid(model, Vector3(side * 0.14, 1.53, -0.15), Vector3(0.18, 0.15, 0.13), skin)
 			for i in range(3):
-				Geo.ellipsoid(model, Vector3(side * 0.14, 1.3 - i * 0.13, -0.21), Vector3(0.22, 0.11, 0.09), skin)
+				Geo.ellipsoid(model, Vector3(side * 0.14, 1.3 - i * 0.13, -0.21), Vector3(0.24, 0.09, 0.045), skin)
 		Geo.link(model, Vector3(-0.13, 1.51, -0.2), Vector3(0, 1.55, -0.24), 0.025, dark)
 		Geo.link(model, Vector3(0, 1.55, -0.24), Vector3(0.13, 1.51, -0.2), 0.025, dark)
 	else:
@@ -74,7 +76,7 @@ func build_creature() -> void:
 		var arm := Node3D.new()
 		model.add_child(arm)
 		arm.position = Vector3(side * 0.4, 1.4, 0)
-		Geo.ellipsoid(arm, Vector3(0, -0.1, 0), Vector3(0.34 if heavy else 0.23, 0.35, 0.3), body_mat)
+		Geo.ellipsoid(arm, Vector3(0, -0.1, 0), Vector3(0.34 if heavy else 0.23, 0.25 if heavy else 0.35, 0.3), body_mat)
 		Geo.ellipsoid(arm, Vector3(side * 0.04, -0.39, -0.04), Vector3(0.21, 0.36, 0.22), skin if heavy else dark)
 		Geo.ellipsoid(arm, Vector3(side * 0.04, -0.6, -0.08), Vector3(0.19, 0.19, 0.19), dark)
 		if heavy:
@@ -132,3 +134,4 @@ func take_damage(amount: float) -> void:
 		remove_from_group("enemies")
 		defeated.emit()
 		queue_free()
+

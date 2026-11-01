@@ -51,8 +51,8 @@ func _ready() -> void:
 	camera.near = 0.06
 	view_weapon = Node3D.new()
 	camera.add_child(view_weapon)
-	Geo.box(view_weapon, Vector3(0.27, -0.24, -0.48), Vector3(0.13, 0.17, 0.5), Geo.material(Color(0.5, 0.6, 0.7), 0.8))
-	Geo.box(view_weapon, Vector3(0.27, -0.2, -0.75), Vector3(0.07, 0.06, 0.09), Geo.material(Color(0.1, 0.7, 1.0), 0.4, 2.0))
+	build_view_weapon()
+
 	flash = Geo.light(camera, Vector3(0.2, 0, -0.65), Color(0.3, 0.8, 1.0), 0.0, 6.0)
 	lamp = SpotLight3D.new()
 	camera.add_child(lamp)
@@ -70,9 +70,9 @@ func build_model() -> void:
 	var blue := Geo.material(Color(0.025, 0.07, 0.19), 0.7)
 	var black := Geo.material(Color(0.02, 0.027, 0.04), 0.45)
 	var red := Geo.material(Color(1.0, 0.02, 0.04), 0.4, 2.0)
-	Geo.box(body_model, Vector3(0, 1.25, 0), Vector3(0.66, 0.55, 0.36), silver)
-	Geo.box(body_model, Vector3(0, 1.3, -0.2), Vector3(0.52, 0.34, 0.06), blue)
-	Geo.box(body_model, Vector3(0, 1.3, 0.2), Vector3(0.52, 0.34, 0.06), blue)
+	Geo.armor(body_model, Vector3(0, 1.25, 0), Vector3(0.72, 0.5, 0.42), silver, 0.68)
+	Geo.box(body_model, Vector3(0, 1.3, -0.2), Vector3(0.40, 0.29, 0.045), blue)
+	Geo.box(body_model, Vector3(0, 1.3, 0.2), Vector3(0.40, 0.29, 0.045), blue)
 	Geo.box(body_model, Vector3(0, 0.91, 0), Vector3(0.5, 0.22, 0.3), black)
 	Geo.box(body_model, Vector3(0, 0.84, 0), Vector3(0.57, 0.1, 0.35), silver)
 	Geo.ellipsoid(body_model, Vector3(0, 1.75, 0), Vector3(0.46, 0.45, 0.42), blue)
@@ -88,7 +88,7 @@ func build_model() -> void:
 	for side in [-1, 1]:
 		Geo.ellipsoid(body_model, Vector3(side * 0.225, 1.76, 0), Vector3(0.065, 0.16, 0.2), silver)
 		Geo.box(body_model, Vector3(side * 0.29, 1.29, -0.22), Vector3(0.06, 0.37, 0.06), silver)
-		Geo.box(body_model, Vector3(side * 0.18, 1.35, 0.24), Vector3(0.04, 0.25, 0.045), silver)
+		Geo.box(body_model, Vector3(side * 0.16, 1.32, 0.225), Vector3(0.025, 0.22, 0.025), silver)
 		for y in [0.94, 1.00, 1.06]:
 			Geo.box(body_model, Vector3(side * 0.18, y, -0.17), Vector3(0.12, 0.025, 0.04), silver)
 	Geo.box(body_model, Vector3(0, 0.84, -0.2), Vector3(0.16, 0.09, 0.06), blue)
@@ -103,13 +103,13 @@ func build_model() -> void:
 		leg.scale = Vector3(0.95, 1.25, 0.95)
 		Geo.ellipsoid(leg, Vector3(0, -0.18, 0), Vector3(0.25, 0.38, 0.28), blue)
 		Geo.ellipsoid(leg, Vector3(0, -0.37, -0.04), Vector3(0.27, 0.17, 0.3), silver)
-		Geo.box(leg, Vector3(0, -0.53, 0), Vector3(0.26, 0.35, 0.28), silver)
-		Geo.box(leg, Vector3(0, -0.72, -0.07), Vector3(0.28, 0.14, 0.43), black)
+		Geo.armor(leg, Vector3(0, -0.53, 0), Vector3(0.25, 0.35, 0.29), silver, 0.68)
+		Geo.ellipsoid(leg, Vector3(0, -0.72, -0.055), Vector3(0.25, 0.16, 0.36), black)
 		var arm := Node3D.new()
 		body_model.add_child(arm)
 		arm.position = Vector3(side * 0.43, 1.53, 0)
 		arm.scale = Vector3(0.9, 1.06, 0.9)
-		Geo.ellipsoid(arm, Vector3(0, -0.06, 0), Vector3(0.32, 0.3, 0.36), silver)
+		Geo.ellipsoid(arm, Vector3(0, -0.06, 0), Vector3(0.28, 0.23, 0.34), silver)
 		Geo.box(arm, Vector3(side * 0.1, -0.07, 0), Vector3(0.08, 0.18, 0.29), blue)
 		Geo.box(arm, Vector3(0, -0.28, 0), Vector3(0.17, 0.25, 0.2), black)
 		Geo.ellipsoid(arm, Vector3(0, -0.49, -0.05), Vector3(0.21, 0.28, 0.23), silver)
@@ -263,3 +263,27 @@ func take_damage(amount: float) -> void:
 	damaged.emit()
 	if health <= 0.0:
 		died.emit()
+
+
+func build_view_weapon() -> void:
+	var silver := Geo.material(Color(0.46, 0.53, 0.61), 0.85)
+	var dark := Geo.material(Color(0.025, 0.04, 0.065), 0.5)
+	var blue := Geo.material(Color(0.035, 0.10, 0.22), 0.6)
+	var red := Geo.material(Color(0.8, 0.03, 0.015), 0.2, 0.8)
+	# Farther from the eye and lower in frame; an identifiable receiver and grip.
+	view_weapon.position = Vector3(0.28, -0.24, -0.72)
+	Geo.armor(view_weapon, Vector3(0, 0, 0), Vector3(0.12, 0.3, 0.095), silver, 0.85).rotation.x = PI / 2.0
+	Geo.box(view_weapon, Vector3(0, 0.05, -0.03), Vector3(0.085, 0.025, 0.24), blue)
+	Geo.box(view_weapon, Vector3(0, -0.085, 0.09), Vector3(0.08, 0.14, 0.085), dark).rotation.x = -0.2
+	Geo.box(view_weapon, Vector3(0, -0.07, 0), Vector3(0.065, 0.015, 0.095), silver)
+	Geo.box(view_weapon, Vector3(0, -0.04, -0.045), Vector3(0.065, 0.07, 0.015), silver)
+	Geo.box(view_weapon, Vector3(0, 0.005, -0.17), Vector3(0.08, 0.065, 0.055), dark)
+	Geo.box(view_weapon, Vector3(0, 0.005, -0.2), Vector3(0.045, 0.034, 0.012), black_muzzle())
+	Geo.box(view_weapon, Vector3(0, 0.078, -0.11), Vector3(0.018, 0.025, 0.025), red)
+	for i in range(4):
+		Geo.box(view_weapon, Vector3(0.056, 0.008, -0.08 + i * 0.045), Vector3(0.006, 0.035, 0.012), dark)
+	Geo.ellipsoid(view_weapon, Vector3(0, -0.12, 0.13), Vector3(0.12, 0.11, 0.13), dark)
+	Geo.armor(view_weapon, Vector3(0.015, -0.21, 0.17), Vector3(0.15, 0.14, 0.16), silver)
+
+func black_muzzle() -> Material:
+	return Geo.material(Color(0.004, 0.006, 0.009))
