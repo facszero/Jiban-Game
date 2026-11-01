@@ -13,6 +13,11 @@ var model: Node3D
 var limbs: Array[Node3D] = []
 var gait := 0.0
 var hit_flash := 0.0
+var attack_elapsed := -1.0
+var attack_hit := false
+const HEAVY_WINDUP := 0.65
+const HEAVY_IMPACT := 0.78
+const HEAVY_DURATION := 1.45
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -28,14 +33,16 @@ func _ready() -> void:
 	col.shape = capsule
 	col.position.y = capsule.height / 2.0
 	add_child(col)
-	model = Node3D.new()
+	model = preload("res://scripts/chamelenoid_model.gd").new() if heavy else Node3D.new()
 	add_child(model)
-	model.scale = Vector3.ONE * scale_factor
+	model.scale = Vector3.ONE * (1.1 if heavy else scale_factor)
 	build_creature()
 	eye = Geo.light(self, Vector3(0, 1.5, -0.4), Color(1, 0.12, 0.03), 0.0, 2.0)
 	player = get_tree().get_first_node_in_group("player")
 
 func build_creature() -> void:
+	if heavy:
+		return
 	# Reference-based low-poly adaptations; no ripped textures or meshes.
 	var dark := Geo.material(Color(0.045, 0.055, 0.065), 0.25)
 	var pale := Geo.material(Color(0.46, 0.51, 0.36), 0.25)
@@ -88,6 +95,12 @@ func build_creature() -> void:
 		limbs.append(arm)
 
 func animate_model(delta: float) -> void:
+	if heavy:
+		gait += Vector2(velocity.x, velocity.z).length() * delta * 3.0
+		model.animate(gait, 1.0 if state == "PERSIGUIENDO" else 0.0, attack_elapsed)
+		hit_flash = maxf(0.0, hit_flash - delta)
+		eye.light_energy = 2.5 if hit_flash > 0 else (0.7 if state == "PREPARANDO" else 0.0)
+		return
 	gait += Vector2(velocity.x, velocity.z).length() * delta * 3.0
 	var stride := sin(gait) * (0.35 if state == "PERSIGUIENDO" else 0.0)
 	limbs[0].rotation.x = stride
@@ -100,6 +113,9 @@ func animate_model(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(player) or player.health <= 0.0 or health <= 0.0:
+		return
+	if heavy:
+		update_heavy(delta)
 		return
 	cooldown = maxf(0.0, cooldown - delta)
 	var offset := player.global_position - global_position
@@ -135,3 +151,47 @@ func take_damage(amount: float) -> void:
 		defeated.emit()
 		queue_free()
 
+
+
+func sees_player() -> bool:
+	var query := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 1.3, player.global_position + Vector3.UP * 1.3, 3, [get_rid()])
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	return not hit.is_empty() and hit.collider == player
+
+func update_heavy(delta: float) -> void:
+	cooldown = maxf(0.0, cooldown-delta)
+	var offset := player.global_position-global_position
+	var distance := offset.length()
+	var direction := Vector3(offset.x,0,offset.z).normalized()
+	velocity.x=0
+	velocity.z=0
+	if attack_elapsed >= 0:
+		# Commit to the direction of the windup, so a sidestep can evade the swipe.
+		attack_elapsed += delta
+		state = "PREPARANDO" if attack_elapsed < HEAVY_WINDUP else ("ATACANDO" if attack_elapsed < .9 else "RECUPERANDO")
+		if attack_elapsed >= HEAVY_IMPACT and not attack_hit:
+			attack_hit=true
+			if distance < 2.1 and (-global_basis.z).dot(direction) > .35 and sees_player():
+				player.take_damage(28.0)
+		if attack_elapsed >= HEAVY_DURATION:
+			attack_elapsed=-1
+			cooldown=.35
+			state="RECUPERANDO"
+	elif distance < 19.0 and sees_player():
+		rotation.y=lerp_angle(rotation.y,atan2(-direction.x,-direction.z),minf(1.0,delta*6.0))
+		if distance < 2.0:
+			state="RECUPERANDO"
+			if cooldown <= 0:
+				attack_elapsed=0
+				attack_hit=false
+				state="PREPARANDO"
+		else:
+			state="PERSIGUIENDO"
+			velocity.x=direction.x*speed
+			velocity.z=direction.z*speed
+	else:
+		state="INACTIVO"
+	if not is_on_floor():
+		velocity.y-=20.0*delta
+	move_and_slide()
+	animate_model(delta)

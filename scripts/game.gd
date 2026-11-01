@@ -149,7 +149,7 @@ func create_hud() -> void:
 	restart.pressed.connect(restart_checkpoint)
 	var review_button := Button.new()
 	menu.add_child(review_button)
-	review_button.text = "VER MODELO 3D DE JIBAN"
+	review_button.text = "VER MODELOS 3D"
 	review_button.custom_minimum_size.y = 48
 	review_button.pressed.connect(open_model_review)
 	var sensitivity := HSlider.new()
@@ -344,4 +344,5 @@ func open_model_review() -> void:
 		touch_controls.set_process_input(true)
 		touch_controls.set_process_unhandled_input(true)
 	)
+
 

@@ -37,6 +37,9 @@ jobs:
           timeout 30 "$GODOT" --headless --script res://tests/model.gd 2>&1 | tee /tmp/model.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/model.log
           grep -q 'MODEL RESULT: 0 failures' /tmp/model.log
+          timeout 30 "$GODOT" --headless --script res://tests/chamelenoid.gd 2>&1 | tee /tmp/chamelenoid.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/chamelenoid.log
+          grep -q 'CHAMELENOID RESULT: 0 failures' /tmp/chamelenoid.log
           mkdir -p exports/web
           "$GODOT" --headless --export-release Web exports/web/index.html 2>&1 | tee /tmp/export.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/export.log
@@ -63,4 +66,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
 

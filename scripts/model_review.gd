@@ -12,6 +12,11 @@ var phase := 0.0
 var drag_finger := -1
 var dragging := false
 var spin_toggle: CheckButton
+var title: Label
+var creature_selected := false
+var preview_attack := -1.0
+var attack_button: Button
+var selector: OptionButton
 func _ready() -> void:
 	layer=20
 	process_mode=Node.PROCESS_MODE_ALWAYS
@@ -52,12 +57,19 @@ func _ready() -> void:
 	camera.fov=42
 	camera.current=true
 	update_camera()
-	var title := Label.new()
+	title = Label.new()
 	frame.add_child(title)
 	title.position=Vector2(30,24)
 	title.text="JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 2"
 	title.add_theme_font_size_override("font_size",23)
 	title.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	selector = OptionButton.new()
+	frame.add_child(selector)
+	selector.position=Vector2(680,24)
+	selector.size=Vector2(310,55)
+	selector.add_item("JIBAN")
+	selector.add_item("CHAMELENOID")
+	selector.item_selected.connect(select_model)
 	var exit_button := Button.new()
 	frame.add_child(exit_button)
 	exit_button.text="VOLVER A PAUSA"
@@ -88,13 +100,19 @@ func _ready() -> void:
 		button.text=item[0]
 		button.custom_minimum_size=Vector2(60,52)
 		button.pressed.connect(func(): zoom(item[1]))
+	attack_button=Button.new()
+	bar.add_child(attack_button)
+	attack_button.text="ATAQUE"
+	attack_button.custom_minimum_size=Vector2(120,52)
+	attack_button.visible=false
+	attack_button.pressed.connect(func(): preview_attack=0.0)
 	var help := Label.new()
 	frame.add_child(help)
 	help.position=Vector2(30,686)
 	help.text="Arrastrá para girar · + / − para acercar · la partida permanece en pausa"
 	help.mouse_filter=Control.MOUSE_FILTER_IGNORE
 func update_camera() -> void:
-	var target := Vector3(0,1.05,0)
+	var target := Vector3(0,1.20 if creature_selected else 1.05,0)
 	camera.position=target+Vector3(sin(yaw)*cos(pitch),sin(pitch),-cos(yaw)*cos(pitch))*distance
 	camera.look_at(target)
 func zoom(amount: float) -> void:
@@ -128,7 +146,14 @@ func orbit_input(event: InputEvent) -> void:
 		update_camera()
 func _process(delta: float) -> void:
 	phase+=delta*5.0
-	model.animate(phase,1.0 if walking else 0.0,false)
+	if creature_selected:
+		if preview_attack >= 0:
+			preview_attack+=delta
+			if preview_attack>1.45:
+				preview_attack=-1
+		model.animate(phase,1.0 if walking and preview_attack<0 else 0.0,preview_attack)
+	else:
+		model.animate(phase,1.0 if walking else 0.0,false)
 	if spinning:
 		yaw+=delta*.4
 		update_camera()
@@ -140,3 +165,19 @@ func close() -> void:
 	closed.emit()
 	queue_free()
 
+
+
+func select_model(index: int) -> void:
+	selector.select(index)
+	creature_selected=index==1
+	viewport.remove_child(model)
+	model.free()
+	model=preload("res://scripts/chamelenoid_model.gd").new() if creature_selected else preload("res://scripts/jiban_model.gd").new()
+	viewport.add_child(model)
+	preview_attack=-1
+	distance=4.35 if creature_selected else 3.65
+	pitch=.08
+	yaw=-.35
+	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · primera revisión" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 2"
+	attack_button.visible=creature_selected
+	update_camera()
