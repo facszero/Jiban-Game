@@ -61,7 +61,40 @@ func _ready() -> void:
 func shell(parent: Node3D, pos: Vector3, rings: Array, mat: Material) -> MeshInstance3D:
 	return helper.shell(parent,pos,rings,mat,24)
 func plate(parent: Node3D, pos: Vector3, points: Array, thickness: float, mat: Material) -> MeshInstance3D:
-	return helper.plate(parent,pos,points,thickness,mat)
+	# Rounded outline and concentric curved rings replace the flat bevel fan.
+	var outline: Array = points.duplicate()
+	for iteration in range(2):
+		var rounded: Array = []
+		for i in range(outline.size()):
+			var a: Vector2 = outline[i]
+			var b: Vector2 = outline[(i+1)%outline.size()]
+			rounded.append(a.lerp(b,.18))
+			rounded.append(a.lerp(b,.82))
+		outline=rounded
+	var center := Vector2.ZERO
+	for point in outline:
+		center+=point
+	center/=outline.size()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var rings := [1.0,.78,.45,.08]
+	for r in range(rings.size()-1):
+		for i in range(outline.size()):
+			var vertices: Array[Vector3]=[]
+			for item in [Vector2i(r,i),Vector2i(r,(i+1)%outline.size()),Vector2i(r+1,(i+1)%outline.size()),Vector2i(r+1,i)]:
+				var radius: float=rings[item.x]
+				var point: Vector2=center+(outline[item.y]-center)*radius
+				vertices.append(Vector3(point.x,point.y,-thickness*(1-radius*radius)))
+			for index in [0,2,1,0,3,2]:
+				st.add_vertex(vertices[index])
+	for i in range(outline.size()):
+		var a: Vector2=center+(outline[i]-center)*.08
+		var b: Vector2=center+(outline[(i+1)%outline.size()]-center)*.08
+		for vertex in [Vector3(center.x,center.y,-thickness),Vector3(b.x,b.y,-thickness*.9936),Vector3(a.x,a.y,-thickness*.9936)]:
+			st.add_vertex(vertex)
+	st.generate_normals()
+	st.index()
+	return helper.instance(parent,pos,st.commit(),mat)
 func leaf(parent: Node3D, pos: Vector3, width: float, length: float, mat: Material) -> MeshInstance3D:
 	return plate(parent,pos,[Vector2(-width*.35,length*.5),Vector2(width*.35,length*.5),Vector2(width*.5,length*.18),Vector2(width*.28,-length*.22),Vector2(0,-length*.5),Vector2(-width*.35,-length*.18)],width*.14,mat)
 func build_torso() -> void:
@@ -69,15 +102,15 @@ func build_torso() -> void:
 	shell(torso,Vector3.ZERO,[Vector3(.88,.16,.12),Vector3(1.02,.23,.15),Vector3(1.13,.19,.13)],flesh)
 	for side in [-1,1]:
 		# Wide pectoral plates converge into a central keel.
-		var chest_points := [Vector2(-.12,.13),Vector2(.08,.13),Vector2(.16,.035),Vector2(.10,-.10),Vector2(-.035,-.14),Vector2(-.12,-.04)]
+		var chest_points := [Vector2(-.145,.13),Vector2(.08,.13),Vector2(.16,.035),Vector2(.10,-.10),Vector2(-.065,-.14),Vector2(-.145,-.04)]
 		if side<0:
 			for i in range(chest_points.size()):
 				chest_points[i].x *= -1
 			chest_points.reverse()
-		plate(torso,Vector3(side*.15,1.56,-.174),chest_points,.052,skin)
+		plate(torso,Vector3(side*.125,1.565,-.158),chest_points,.06,skin)
 		for i in range(3):
-			var y := 1.38-i*.105
-			leaf(torso,Vector3(side*(.12-i*.018),y,-.163),.18-i*.035,.14,skin).rotation.z=side*.3
+			var y := 1.365-i*.105
+			leaf(torso,Vector3(side*(.10-i*.012),y,-.15),.205-i*.025,.17,skin).rotation.z=side*.3
 		leaf(torso,Vector3(side*.16,1.04,-.13),.19,.20,skin).rotation.z=side*.55
 		# Overlapping dorsal plates and maroon rib folds.
 		for i in range(3):
@@ -94,27 +127,19 @@ func build_torso() -> void:
 func build_head() -> void:
 	head = helper.joint(torso,Vector3(0,1.85,0),"Head")
 	shell(head,Vector3.ZERO,[Vector3(-.02,.065,.075),Vector3(.07,.14,.13),Vector3(.22,.15,.13),Vector3(.32,.105,.10),Vector3(.38,.045,.055)],skin)
-	# Sagittal crest is a narrow, swept fin rather than a rounded horn.
+	# Broad, volumetric crest grows from the forehead into a swept point.
+	build_crest()
 	for side in [-1,1]:
-		var fin_points := [Vector2(-.10,-.10),Vector2(-.10,.06),Vector2(-.04,.24),Vector2(.035,.31),Vector2(.06,.10),Vector2(.12,-.07)]
-		if side<0:
-			for i in range(fin_points.size()):
-				fin_points[i].x *= -1
-			fin_points.reverse()
-		plate(head,Vector3(side*.015,.30,.015),fin_points,.015,skin).rotation.y=side*PI/2
-		var eye_points := [Vector2(-.048,.072),Vector2(.035,.04),Vector2(.053,-.045),Vector2(.011,-.07),Vector2(-.037,-.015)]
-		if side<0:
-			for i in range(eye_points.size()):
-				eye_points[i].x *= -1
-			eye_points.reverse()
-		plate(head,Vector3(side*.091,.188,-.137),eye_points,.018,gold).rotation.z=side*.35
-		plate(head,Vector3(side*.093,.165,-.160),[Vector2(-.012,.032),Vector2(.009,.026),Vector2(.013,-.025),Vector2(-.005,-.034)],.004,dark).rotation.z=side*.3
-		leaf(head,Vector3(side*.11,.09,-.115),.075,.18,skin).rotation.z=side*-.35
-		Geo.link(head,Vector3(side*.025,.22,-.148),Vector3(side*.11,.29,-.105),.012,edge)
+		var socket := leaf(head,Vector3(side*.087,.193,-.113),.112,.185,skin)
+		socket.rotation.z=-side*.45
+		var eye_points := [Vector2(0,.060),Vector2(.023,.028),Vector2(.025,-.021),Vector2(0,-.058),Vector2(-.022,-.022),Vector2(-.023,.027)]
+		plate(head,Vector3(side*.087,.193,-.124),eye_points,.008,gold).rotation.z=-side*.45
+		plate(head,Vector3(side*.087,.186,-.136),[Vector2(0,.029),Vector2(.006,.013),Vector2(.007,-.02),Vector2(0,-.03),Vector2(-.007,-.019),Vector2(-.006,.012)],.003,dark).rotation.z=-side*.45
+		leaf(head,Vector3(side*.107,.079,-.103),.085,.17,skin).rotation.z=-side*.3
 	# Brow ridge, tapered snout, mouth seam and pointed lower jaw.
 	plate(head,Vector3(0,.12,-.145),[Vector2(-.04,.13),Vector2(.04,.13),Vector2(.045,-.03),Vector2(0,-.07),Vector2(-.045,-.03)],.032,skin)
-	Geo.link(head,Vector3(-.073,.04,-.144),Vector3(0,.061,-.174),.009,dark)
-	Geo.link(head,Vector3(0,.061,-.174),Vector3(.073,.04,-.144),.009,dark)
+	Geo.link(head,Vector3(-.065,.04,-.137),Vector3(0,.056,-.169),.006,dark)
+	Geo.link(head,Vector3(0,.056,-.169),Vector3(.065,.04,-.137),.006,dark)
 	leaf(head,Vector3(0,.005,-.135),.13,.115,edge)
 	for side in [-1,1]:
 		for i in range(3):
@@ -187,3 +212,21 @@ func animate(phase: float, movement: float, attack_time: float = -1.0) -> void:
 		elbows[1].rotation.x=-.7*(1-release)-.15
 		torso.rotation.y=lerpf(-.22,.28,release)*(1-recover)*pull
 		torso.rotation.x=.10*release*(1-recover)
+
+
+func build_crest() -> void:
+	var profile := [Vector4(.20,.072,.10,0),Vector4(.30,.077,.11,.018),Vector4(.39,.055,.09,.042),Vector4(.47,.028,.055,.075),Vector4(.54,.002,.008,.095)]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for r in range(profile.size()-1):
+		for i in range(16):
+			var vertices: Array[Vector3]=[]
+			for pair in [Vector2i(r,i),Vector2i(r,i+1),Vector2i(r+1,i+1),Vector2i(r+1,i)]:
+				var ring: Vector4=profile[pair.x]
+				var angle: float=TAU*pair.y/16.0
+				vertices.append(Vector3(sin(angle)*ring.y,ring.x,cos(angle)*ring.z+ring.w))
+			for index in [0,2,1,0,3,2]:
+				st.add_vertex(vertices[index])
+	st.generate_normals()
+	st.index()
+	helper.instance(head,Vector3.ZERO,st.commit(),skin)

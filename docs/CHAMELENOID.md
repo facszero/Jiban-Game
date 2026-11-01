@@ -36,3 +36,16 @@ Se mantienen las pruebas de combate, controles y visor anteriores.
 Sigue pendiente el acabado artístico fino, animación de muerte y un rig con
 más deformación orgánica. El objetivo móvil A56 requiere mediciones en equipo
 real antes de considerarlo un requisito mínimo confirmado.
+
+
+## Revisión 2 — cabeza y torso
+
+La cresta usa una malla volumétrica de base ancha que nace en la frente y se
+estrecha hacia atrás. Los ojos son más estrechos y están encajados en el borde
+orgánico del párpado. Las placas usan contornos redondeados y varias secciones
+curvas, en lugar de un frente plano con bisel. Los pectorales y las placas
+abdominales se aproximan para reducir las separaciones.
+
+La malla tiene aproximadamente 20.100 triángulos y mantiene 32 mallas dibujables.
+No se cambia la lógica del ataque, daño, colisión ni velocidades. Sigue pendiente
+un acabado de piel más detallado y la medición de rendimiento en móvil real.

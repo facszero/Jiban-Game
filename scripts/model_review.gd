@@ -178,6 +178,7 @@ func select_model(index: int) -> void:
 	distance=4.35 if creature_selected else 3.65
 	pitch=.08
 	yaw=-.35
-	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · primera revisión" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 2"
+	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión 2" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 2"
 	attack_button.visible=creature_selected
 	update_camera()
+
