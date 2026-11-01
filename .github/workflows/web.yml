@@ -1,7 +1,7 @@
 name: Build browser demo
 on:
   push:
-    branches: [codex/prototype-sector-01]
+    branches: [main, codex/prototype-sector-01]
   workflow_dispatch:
 permissions:
   contents: read
@@ -47,6 +47,7 @@ jobs:
         with:
           path: exports/web/
   deploy:
+    if: github.ref == 'refs/heads/main'
     needs: export
     runs-on: ubuntu-latest
     permissions:
