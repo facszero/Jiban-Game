@@ -30,11 +30,26 @@ func _ready() -> void:
 	for side in [-1,1]:
 		Geo.box(self,Vector3(side*.018,.045,.057),Vector3(.008,.014,.018),steel)
 	if include_hand:
-		mesh_tools.shell(self,Vector3(0,-.07,.068),[Vector3(-.043,.038,.038),Vector3(.03,.038,.038)],dark,16)
+		# The hand wraps the grip; the forearm continues behind the lower screen edge.
+		var glove = Armor.metal(Color(.075,.09,.115),.12,.60)
+		mesh_tools.shell(self,Vector3(0,-.067,.065),[Vector3(-.052,.044,.044),Vector3(.028,.043,.044)],glove,16)
 		for i in range(3):
-			Geo.box(self,Vector3(.023,-.047-i*.019,.016),Vector3(.038,.014,.027),dark)
-		Geo.box(self,Vector3(-.035,-.045,.046),Vector3(.023,.052,.027),dark).rotation.z=-.25
-		mesh_tools.shell(self,Vector3(.006,-.16,.095),[Vector3(-.055,.045,.055),Vector3(.045,.038,.043)],silver,12)
-		Geo.box(self,Vector3(.006,-.16,.148),Vector3(.045,.075,.008),navy)
+			var y := -.043-i*.023
+			Geo.box(self,Vector3(.026,y,.018),Vector3(.047,.018,.034),glove)
+			Geo.box(self,Vector3(.046,y,.043),Vector3(.018,.016,.027),steel)
+		# Thumb crosses the near side of the grip; plates make the glove readable in shadow.
+		Geo.box(self,Vector3(-.034,-.044,.087),Vector3(.027,.057,.034),glove).rotation.z=-.35
+		Geo.box(self,Vector3(0,-.066,.111),Vector3(.047,.052,.008),silver)
+		for i in range(3):
+			Geo.box(self,Vector3(-.016+i*.016,-.025,.103),Vector3(.012,.013,.013),steel)
+		var forearm := Node3D.new()
+		forearm.name = "ViewForearm"
+		add_child(forearm)
+		forearm.position = Vector3(.006,-.112,.076)
+		forearm.rotation.x = -.5
+		mesh_tools.ribs(forearm,-.055,3,.040,.045)
+		mesh_tools.shell(forearm,Vector3.ZERO,[Vector3(-.48,.085,.085),Vector3(-.30,.073,.076),Vector3(-.09,.052,.058),Vector3(-.045,.043,.048)],silver,16)
+		mesh_tools.plate(forearm,Vector3(0,-.23,.073),[Vector2(-.042,.13),Vector2(.042,.13),Vector2(.058,-.16),Vector2(-.058,-.16)],.009,navy).rotation.y=PI
 	mesh_tools.merge_parts(self)
 	mesh_tools.free()
+
