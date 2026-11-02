@@ -30,6 +30,7 @@ var weapon_clearance := 1.0
 var weapon_probe := SphereShape3D.new()
 var flash: OmniLight3D
 var step_clock := 0.0
+var last_visual_yaw := 0.0
 var lamp: SpotLight3D
 
 func _ready() -> void:
@@ -120,7 +121,9 @@ func _physics_process(delta: float) -> void:
 	if global_position.y < -12.0:
 		take_damage(999.0)
 	step_clock += Vector2(velocity.x, velocity.z).length() * delta * 2.2
-	body_model.animate(step_clock, minf(axis.length(), 1.0), Input.is_action_pressed("aim") or Input.is_action_pressed("fire"))
+	var turn_speed := angle_difference(last_visual_yaw,rotation.y)/maxf(delta,.001)
+	last_visual_yaw=rotation.y
+	body_model.update_locomotion(delta,global_basis.inverse()*velocity,running,Input.is_action_pressed("aim") or Input.is_action_pressed("fire"),is_on_floor(),turn_speed)
 	update_camera(delta)
 	if Input.is_action_pressed("fire"):
 		shoot()
@@ -234,3 +237,4 @@ func build_view_weapon() -> void:
 	var pistol := preload("res://scripts/service_weapon.gd").new()
 	pistol.include_hand = true
 	view_weapon.add_child(pistol)
+

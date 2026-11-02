@@ -5,6 +5,15 @@ var arm_left: Node3D
 var arm_right: Node3D
 var leg_left: Node3D
 var leg_right: Node3D
+var upper_body: Node3D
+var pelvis: Node3D
+var ankles: Array[Node3D] = []
+var move_blend := 0.0
+var run_blend := 0.0
+var aim_blend := 0.0
+var travel := Vector2(0,-1)
+var locomotion_phase := 0.0
+var turn_blend := 0.0
 var elbows: Array[Node3D] = []
 var knees: Array[Node3D] = []
 var silver := metal(Color(.36,.40,.46),.65,.42)
@@ -23,11 +32,19 @@ func _ready() -> void:
 	red.emission_enabled=true
 	red.emission=Color(.85,.005,.015)
 	red.emission_energy_multiplier=.8
+	upper_body = joint(self,Vector3.ZERO,"UpperBody")
+	pelvis = joint(self,Vector3.ZERO,"Pelvis")
 	build_torso()
 	build_head()
 	for side in [-1,1]:
 		build_arm(side)
 		build_leg(side)
+	for child in upper_body.get_children():
+		child.position.y-=1.2
+	upper_body.position.y=1.2
+	for child in pelvis.get_children():
+		child.position.y-=.99
+	pelvis.position.y=.99
 	merge_parts(self)
 func joint(parent: Node3D, at: Vector3, title: String) -> Node3D:
 	var node := Node3D.new()
@@ -94,34 +111,34 @@ func ribs(parent: Node3D, y: float, count: int, radius: float, depth: float) -> 
 		var h := y+i*.023
 		shell(parent,Vector3.ZERO,[Vector3(h,radius,depth),Vector3(h+.008,radius+.005,depth+.005),Vector3(h+.018,radius,depth)],rubber,16)
 func build_torso() -> void:
-	shell(self,Vector3.ZERO,[Vector3(1.04,.15,.11),Vector3(1.18,.17,.12),Vector3(1.40,.255,.145),Vector3(1.59,.23,.12)],rubber)
-	shell(self,Vector3.ZERO,[Vector3(1.30,.16,.115),Vector3(1.36,.23,.145),Vector3(1.50,.265,.145),Vector3(1.60,.225,.12)],silver)
-	plate(self,Vector3(0,1.46,-.145),[Vector2(-.23,.12),Vector2(.23,.12),Vector2(.24,-.015),Vector2(.16,-.12),Vector2(-.16,-.12),Vector2(-.24,-.015)],.035,navy)
-	plate(self,Vector3(0,1.46,.145),[Vector2(-.20,.1),Vector2(.20,.1),Vector2(.23,-.04),Vector2(.13,-.13),Vector2(-.13,-.13),Vector2(-.23,-.04)],.028,silver).rotation.y=PI
-	plate(self,Vector3(0,1.55,.16),[Vector2(-.16,.025),Vector2(.16,.025),Vector2(.14,-.027),Vector2(-.14,-.027)],.008,navy).rotation.y=PI
+	shell(upper_body,Vector3.ZERO,[Vector3(1.04,.15,.11),Vector3(1.18,.17,.12),Vector3(1.40,.255,.145),Vector3(1.59,.23,.12)],rubber)
+	shell(upper_body,Vector3.ZERO,[Vector3(1.30,.16,.115),Vector3(1.36,.23,.145),Vector3(1.50,.265,.145),Vector3(1.60,.225,.12)],silver)
+	plate(upper_body,Vector3(0,1.46,-.145),[Vector2(-.23,.12),Vector2(.23,.12),Vector2(.24,-.015),Vector2(.16,-.12),Vector2(-.16,-.12),Vector2(-.24,-.015)],.035,navy)
+	plate(upper_body,Vector3(0,1.46,.145),[Vector2(-.20,.1),Vector2(.20,.1),Vector2(.23,-.04),Vector2(.13,-.13),Vector2(-.13,-.13),Vector2(-.23,-.04)],.028,silver).rotation.y=PI
+	plate(upper_body,Vector3(0,1.55,.16),[Vector2(-.16,.025),Vector2(.16,.025),Vector2(.14,-.027),Vector2(-.14,-.027)],.008,navy).rotation.y=PI
 	for side in [-1,1]:
-		Geo.box(self,Vector3(side*.13,1.46,.174),Vector3(.007,.12,.006),steel)
+		Geo.box(upper_body,Vector3(side*.13,1.46,.174),Vector3(.007,.12,.006),steel)
 		for y in [1.40,1.52]:
-			Geo.box(self,Vector3(side*.18,y,.162),Vector3(.012,.012,.006),steel)
+			Geo.box(upper_body,Vector3(side*.18,y,.162),Vector3(.012,.012,.006),steel)
 	for i in range(4):
-		Geo.box(self,Vector3(0,1.49+i*.014,.178),Vector3(.085,.007,.008),rubber)
+		Geo.box(upper_body,Vector3(0,1.49+i*.014,.178),Vector3(.085,.007,.008),rubber)
 		var y := 1.12+i*.053
-		shell(self,Vector3.ZERO,[Vector3(y,.159+i*.005,.119),Vector3(y+.04,.166+i*.005,.128)],navy)
-		plate(self,Vector3(0,y+.02,-.128),[Vector2(-.075,.018),Vector2(.075,.018),Vector2(.07,-.018),Vector2(-.07,-.018)],.012,navy)
-	shell(self,Vector3.ZERO,[Vector3(.94,.14,.10),Vector3(1.01,.19,.13),Vector3(1.095,.17,.12)],navy)
-	shell(self,Vector3.ZERO,[Vector3(1.07,.18,.132),Vector3(1.13,.18,.132)],silver)
-	Geo.box(self,Vector3(0,1.10,-.146),Vector3(.105,.057,.03),steel)
-	Geo.box(self,Vector3(0,1.10,-.166),Vector3(.068,.025,.012),red)
+		shell(upper_body,Vector3.ZERO,[Vector3(y,.159+i*.005,.119),Vector3(y+.04,.166+i*.005,.128)],navy)
+		plate(upper_body,Vector3(0,y+.02,-.128),[Vector2(-.075,.018),Vector2(.075,.018),Vector2(.07,-.018),Vector2(-.07,-.018)],.012,navy)
+	shell(upper_body,Vector3.ZERO,[Vector3(.94,.14,.10),Vector3(1.01,.19,.13),Vector3(1.095,.17,.12)],navy)
+	shell(upper_body,Vector3.ZERO,[Vector3(1.07,.18,.132),Vector3(1.13,.18,.132)],silver)
+	Geo.box(upper_body,Vector3(0,1.10,-.146),Vector3(.105,.057,.03),steel)
+	Geo.box(upper_body,Vector3(0,1.10,-.166),Vector3(.068,.025,.012),red)
 	for side in [-1,1]:
-		Geo.box(self,Vector3(side*.135,1.1,-.11),Vector3(.045,.065,.055),silver)
-		Geo.box(self,Vector3(side*.175,1.1,.01),Vector3(.026,.043,.055),steel)
-		plate(self,Vector3(side*.174,1.57,-.12),[Vector2(-.022,.025),Vector2(.022,.025),Vector2(.025,-.08),Vector2(-.025,-.08)],.012,silver).rotation.x=-.35
-	plate(self,Vector3(-.115,1.49,-.184),[Vector2(-.031,.038),Vector2(.031,.038),Vector2(.027,-.018),Vector2(0,-.043),Vector2(-.027,-.018)],.006,gold)
-	Geo.box(self,Vector3(-.115,1.49,-.194),Vector3(.006,.052,.004),navy)
-	Geo.box(self,Vector3(-.115,1.50,-.194),Vector3(.042,.006,.004),navy)
-	ribs(self,1.60,4,.079,.075)
+		Geo.box(upper_body,Vector3(side*.135,1.1,-.11),Vector3(.045,.065,.055),silver)
+		Geo.box(upper_body,Vector3(side*.175,1.1,.01),Vector3(.026,.043,.055),steel)
+		plate(upper_body,Vector3(side*.174,1.57,-.12),[Vector2(-.022,.025),Vector2(.022,.025),Vector2(.025,-.08),Vector2(-.025,-.08)],.012,silver).rotation.x=-.35
+	plate(upper_body,Vector3(-.115,1.49,-.184),[Vector2(-.031,.038),Vector2(.031,.038),Vector2(.027,-.018),Vector2(0,-.043),Vector2(-.027,-.018)],.006,gold)
+	Geo.box(upper_body,Vector3(-.115,1.49,-.194),Vector3(.006,.052,.004),navy)
+	Geo.box(upper_body,Vector3(-.115,1.50,-.194),Vector3(.042,.006,.004),navy)
+	ribs(upper_body,1.60,4,.079,.075)
 func build_head() -> void:
-	var head := joint(self,Vector3(0,1.69,0),"Helmet")
+	var head := joint(upper_body,Vector3(0,1.69,0),"Helmet")
 	shell(head,Vector3.ZERO,[Vector3(0,.073,.076),Vector3(.065,.119,.112),Vector3(.17,.125,.119),Vector3(.23,.107,.106),Vector3(.267,.06,.068),Vector3(.278,.008,.015)],navy,32)
 	for entry in [[.13,.165,silver],[.105,.125,red],[.085,.10,steel]]:
 		var st := SurfaceTool.new()
@@ -160,7 +177,7 @@ func build_head() -> void:
 	for i in range(3):
 		Geo.box(head,Vector3(0,.08+i*.012,.115),Vector3(.052,.005,.007),rubber)
 func build_arm(side: int) -> void:
-	var arm := joint(self,Vector3(side*.285,1.55,0),"LeftShoulder" if side<0 else "RightShoulder")
+	var arm := joint(upper_body,Vector3(side*.285,1.55,0),"LeftShoulder" if side<0 else "RightShoulder")
 	arm.rotation.z=side*.07
 	shell(arm,Vector3.ZERO,[Vector3(-.16,.085,.09),Vector3(-.06,.112,.123),Vector3(.035,.10,.112),Vector3(.07,.055,.07)],silver)
 	plate(arm,Vector3(side*.025,-.035,-.117),[Vector2(-.045,.055),Vector2(.045,.055),Vector2(.05,-.055),Vector2(-.05,-.055)],.009,navy)
@@ -185,7 +202,7 @@ func build_arm(side: int) -> void:
 		var pistol = load("res://scripts/service_weapon.gd").new()
 		gun.add_child(pistol)
 func build_leg(side: int) -> void:
-	var leg := joint(self,Vector3(side*.12,.99,0),"LeftHip" if side<0 else "RightHip")
+	var leg := joint(pelvis,Vector3(side*.12,.99,0),"LeftHip" if side<0 else "RightHip")
 	shell(leg,Vector3.ZERO,[Vector3(-.34,.072,.078),Vector3(-.25,.084,.088),Vector3(-.055,.098,.10),Vector3(0,.083,.083)],silver)
 	plate(leg,Vector3(0,-.17,-.09),[Vector2(-.045,.11),Vector2(.045,.11),Vector2(.038,-.12),Vector2(-.038,-.12)],.009,silver)
 	var knee := joint(leg,Vector3(0,-.39,0),"Knee")
@@ -195,23 +212,65 @@ func build_leg(side: int) -> void:
 	shell(knee,Vector3.ZERO,[Vector3(-.43,.059,.067),Vector3(-.30,.065,.074),Vector3(-.15,.085,.09),Vector3(-.08,.076,.079)],silver)
 	plate(knee,Vector3(0,-.26,-.083),[Vector2(-.047,.105),Vector2(.047,.105),Vector2(.031,-.14),Vector2(-.031,-.14)],.014,navy)
 	ribs(knee,-.46,2,.059,.066)
-	shell(knee,Vector3(0,-.51,-.042),[Vector3(-.085,.071,.135),Vector3(-.06,.075,.14),Vector3(-.02,.067,.128),Vector3(.045,.06,.075)],silver)
-	shell(knee,Vector3(0,-.51,-.042),[Vector3(-.09,.074,.139),Vector3(-.073,.074,.139)],rubber)
-	plate(knee,Vector3(0,-.49,-.13),[Vector2(-.037,.02),Vector2(.037,.02),Vector2(.045,-.045),Vector2(-.045,-.045)],.006,navy)
+	var ankle := joint(knee,Vector3(0,-.46,0),"Ankle")
+	ankles.append(ankle)
+	shell(ankle,Vector3(0,-.05,-.042),[Vector3(-.085,.071,.135),Vector3(-.06,.075,.14),Vector3(-.02,.067,.128),Vector3(.045,.06,.075)],silver)
+	shell(ankle,Vector3(0,-.05,-.042),[Vector3(-.09,.074,.139),Vector3(-.073,.074,.139)],rubber)
+	plate(ankle,Vector3(0,-.03,-.13),[Vector2(-.037,.02),Vector2(.037,.02),Vector2(.045,-.045),Vector2(-.045,-.045)],.006,navy)
 	if side<0:
 		leg_left=leg
 	else:
 		leg_right=leg
+func update_locomotion(delta: float, local_velocity: Vector3, running: bool, aiming: bool, grounded: bool, turn_speed: float = 0.0) -> void:
+	var speed := Vector2(local_velocity.x,local_velocity.z).length()
+	var weight := 1.0-exp(-delta*10.0)
+	move_blend=lerpf(move_blend,clampf(speed/2.0,0,1) if grounded else 0.0,weight)
+	run_blend=lerpf(run_blend,1.0 if running and grounded else 0.0,weight)
+	aim_blend=lerpf(aim_blend,1.0 if aiming else 0.0,1.0-exp(-delta*16.0))
+	turn_blend=lerpf(turn_blend,clampf(turn_speed,-2,2),weight)
+	if speed>.08:
+		travel=travel.lerp(Vector2(local_velocity.x,local_velocity.z).normalized(),weight).normalized()
+		locomotion_phase+=speed*delta*2.2
+	pose(locomotion_phase,move_blend,run_blend,aim_blend,travel,grounded)
+
 func animate(phase: float, movement: float, aiming: bool) -> void:
-	var stride := sin(phase)*movement*.40
-	leg_left.rotation.x=stride
-	leg_right.rotation.x=-stride
-	knees[0].rotation.x=-maxf(0,sin(phase))*movement*.55
-	knees[1].rotation.x=-maxf(0,-sin(phase))*movement*.55
-	arm_left.rotation.x=-stride*.65
-	arm_right.rotation.x=-1.45 if aiming else stride*.65
-	elbows[0].rotation.x=-.12-absf(stride)*.3
-	elbows[1].rotation.x=-.12
+	# Studio and deterministic pose tests use the same gait as gameplay.
+	pose(phase,movement,0,1.0 if aiming else 0.0,Vector2(0,-1),true)
+
+func pose(phase: float, movement: float, running: float, aiming: float, direction: Vector2, grounded: bool) -> void:
+	var stride_length := lerpf(.29,.41,running)*lerpf(1.0,.72,aiming)
+	var bob := (1-cos(phase*2))*.009*movement*(1+running)+lerpf(.045,.105,running)*movement
+	pelvis.position=Vector3(sin(phase)*.012*movement,.99-bob,0)
+	pelvis.rotation.y=sin(phase)*.045*movement
+	upper_body.position.y=1.2-bob
+	upper_body.rotation=Vector3(-.035*movement-.045*running, -sin(phase)*.055*movement*(1-aiming), -sin(phase)*.018*movement-turn_blend*.018)
+	var legs := [leg_left,leg_right]
+	for i in range(2):
+		var cycle := fposmod(phase/TAU+i*.5,1.0)
+		var swing := clampf((cycle-.60)/.40,0,1)
+		var z := lerpf(-stride_length,stride_length,cycle/.60) if cycle<.60 else stride_length*cos(PI*swing)
+		var lift := sin(PI*swing)*lerpf(.105,.18,running) if cycle>=.60 else 0.0
+		z*=movement
+		lift*=movement
+		var dy := .835-bob-lift
+		var distance := clampf(sqrt(dy*dy+z*z),.15,.849)
+		var knee_angle := acos(clampf((distance*distance-.39*.39-.46*.46)/(2*.39*.46),-1,1))
+		var hip_offset := acos(clampf((.39*.39+distance*distance-.46*.46)/(2*.39*distance),-1,1))
+		legs[i].rotation.x=atan2(-z*(-direction.y),dy)+hip_offset
+		legs[i].rotation.z=atan2(z*direction.x,dy)
+		knees[i].rotation.x=-knee_angle
+		ankles[i].rotation.x=-(legs[i].rotation.x-knee_angle)+sin(PI*swing)*.16*movement
+		ankles[i].rotation.z=-legs[i].rotation.z
+		if not grounded:
+			legs[i].rotation.x=.18 if i==0 else -.10
+			knees[i].rotation.x=-.35
+			ankles[i].rotation.x=.12
+	var arm_swing := sin(phase)*movement*lerpf(.25,.40,running)
+	arm_left.rotation.x=lerpf(-arm_swing,-.65,aiming)
+	arm_right.rotation.x=lerpf(arm_swing,-1.45,aiming)
+	elbows[0].rotation.x=lerpf(-.18-absf(arm_swing)*.4,-.6,aiming)
+	elbows[1].rotation.x=lerpf(-.20-absf(arm_swing)*.3,-.12,aiming)
+
 func merge_parts(parent: Node3D) -> void:
 	# Geo.box uses an unanimated Node3D wrapper; bake that transform before batching.
 	for wrapper in parent.get_children():
@@ -238,4 +297,5 @@ func merge_parts(parent: Node3D) -> void:
 			merge_parts(child)
 	for mat in groups:
 		instance(parent,Vector3.ZERO,groups[mat].commit(),mat)
+
 

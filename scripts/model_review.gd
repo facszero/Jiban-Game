@@ -7,6 +7,10 @@ var yaw := -.35
 var pitch := .08
 var distance := 3.65
 var walking := false
+var gait_selector: OptionButton
+var preview_run := false
+var preview_aim := false
+var preview_walk_blend := 0.0
 var spinning := false
 var phase := 0.0
 var drag_finger := -1
@@ -60,7 +64,7 @@ func _ready() -> void:
 	title = Label.new()
 	frame.add_child(title)
 	title.position=Vector2(30,24)
-	title.text="JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 2"
+	title.text="JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 3"
 	title.add_theme_font_size_override("font_size",23)
 	title.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	selector = OptionButton.new()
@@ -106,6 +110,14 @@ func _ready() -> void:
 	attack_button.custom_minimum_size=Vector2(120,52)
 	attack_button.visible=false
 	attack_button.pressed.connect(func(): preview_attack=0.0)
+	gait_selector = OptionButton.new()
+	frame.add_child(gait_selector)
+	gait_selector.position=Vector2(1030,95)
+	gait_selector.size=Vector2(220,48)
+	gait_selector.add_item("Jiban: caminar")
+	gait_selector.add_item("Jiban: correr")
+	gait_selector.add_item("Jiban: apuntando")
+	gait_selector.item_selected.connect(func(index): preview_run=index==1; preview_aim=index==2)
 	var help := Label.new()
 	frame.add_child(help)
 	help.position=Vector2(30,686)
@@ -153,7 +165,8 @@ func _process(delta: float) -> void:
 				preview_attack=-1
 		model.animate(phase,1.0 if walking and preview_attack<0 else 0.0,preview_attack)
 	else:
-		model.animate(phase,1.0 if walking else 0.0,false)
+		preview_walk_blend=lerpf(preview_walk_blend,1.0 if walking else 0.0,1.0-exp(-delta*10.0))
+		model.update_locomotion(delta,Vector3(0,0,-(6.5 if preview_run else 4.0)*preview_walk_blend),preview_run,preview_aim,true)
 	if spinning:
 		yaw+=delta*.4
 		update_camera()
@@ -178,7 +191,9 @@ func select_model(index: int) -> void:
 	distance=4.35 if creature_selected else 3.65
 	pitch=.08
 	yaw=-.35
-	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión 2" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 2"
+	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión 3" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 3"
 	attack_button.visible=creature_selected
+	gait_selector.visible=not creature_selected
 	update_camera()
+
 

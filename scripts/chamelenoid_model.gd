@@ -25,20 +25,20 @@ func organic(color: Color, roughness: float, seed_value: int) -> StandardMateria
 	var normals := Image.create(128,128,false,Image.FORMAT_RGB8)
 	for y in range(128):
 		for x in range(128):
-			var n := .79 + noise.get_noise_2d(x,y)*.20
+			var n := .59 + surface_height(x,y,noise,seed_value)*.35
 			img.set_pixel(x,y,Color(n,n,n))
-			var dx := noise.get_noise_2d(x+1,y)-noise.get_noise_2d(x-1,y)
-			var dy := noise.get_noise_2d(x,y+1)-noise.get_noise_2d(x,y-1)
-			var normal := Vector3(-dx*.8,-dy*.8,1).normalized()
+			var dx := surface_height(x+1,y,noise,seed_value)-surface_height(x-1,y,noise,seed_value)
+			var dy := surface_height(x,y+1,noise,seed_value)-surface_height(x,y-1,noise,seed_value)
+			var normal := Vector3(-dx*3.0,-dy*3.0,1).normalized()
 			normals.set_pixel(x,y,Color(normal.x*.5+.5,normal.y*.5+.5,normal.z*.5+.5))
 	img.generate_mipmaps()
 	mat.albedo_texture = ImageTexture.create_from_image(img)
 	normals.generate_mipmaps()
 	mat.normal_enabled=true
 	mat.normal_texture=ImageTexture.create_from_image(normals)
-	mat.normal_scale=.65
+	mat.normal_scale=1.0
 	mat.uv1_triplanar = true
-	mat.uv1_scale = Vector3.ONE*9.0
+	mat.uv1_scale = Vector3.ONE*2.8
 	return mat
 
 func _ready() -> void:
@@ -63,7 +63,7 @@ func shell(parent: Node3D, pos: Vector3, rings: Array, mat: Material) -> MeshIns
 func plate(parent: Node3D, pos: Vector3, points: Array, thickness: float, mat: Material) -> MeshInstance3D:
 	# Rounded outline and concentric curved rings replace the flat bevel fan.
 	var outline: Array = points.duplicate()
-	for iteration in range(2):
+	for iteration in range(1):
 		var rounded: Array = []
 		for i in range(outline.size()):
 			var a: Vector2 = outline[i]
@@ -102,12 +102,17 @@ func build_torso() -> void:
 	shell(torso,Vector3.ZERO,[Vector3(.88,.16,.12),Vector3(1.02,.23,.15),Vector3(1.13,.19,.13)],flesh)
 	for side in [-1,1]:
 		# Wide pectoral plates converge into a central keel.
-		var chest_points := [Vector2(-.145,.13),Vector2(.08,.13),Vector2(.16,.035),Vector2(.10,-.10),Vector2(-.065,-.14),Vector2(-.145,-.04)]
+		var chest_points := [Vector2(-.145,.13),Vector2(.025,.15),Vector2(.13,.075),Vector2(.16,.015),Vector2(.10,-.07),Vector2(.025,-.11),Vector2(-.045,-.08),Vector2(-.09,-.14),Vector2(-.145,-.04)]
 		if side<0:
 			for i in range(chest_points.size()):
 				chest_points[i].x *= -1
 			chest_points.reverse()
-		plate(torso,Vector3(side*.125,1.565,-.158),chest_points,.06,skin)
+		plate(torso,Vector3(side*.125,1.565,-.158),chest_points,.037,skin)
+		for row in range(3):
+			for column in range(3):
+				var x: float = side*(.065+column*.045+row*.006)
+				var y := 1.52+row*.037
+				Geo.ellipsoid(torso,Vector3(x,y,-.195),Vector3(.012,.017,.007),edge)
 		for i in range(3):
 			var y := 1.365-i*.105
 			leaf(torso,Vector3(side*(.10-i*.012),y,-.15),.205-i*.025,.17,skin).rotation.z=side*.3
@@ -136,6 +141,9 @@ func build_head() -> void:
 		plate(head,Vector3(side*.087,.193,-.124),eye_points,.008,gold).rotation.z=-side*.45
 		plate(head,Vector3(side*.087,.186,-.136),[Vector2(0,.029),Vector2(.006,.013),Vector2(.007,-.02),Vector2(0,-.03),Vector2(-.007,-.019),Vector2(-.006,.012)],.003,dark).rotation.z=-side*.45
 		leaf(head,Vector3(side*.107,.079,-.103),.085,.17,skin).rotation.z=-side*.3
+	for side in [-1,1]:
+		var brow := leaf(head,Vector3(side*.078,.236,-.131),.040,.14,skin)
+		brow.rotation.z=side*.75
 	# Brow ridge, tapered snout, mouth seam and pointed lower jaw.
 	plate(head,Vector3(0,.12,-.145),[Vector2(-.04,.13),Vector2(.04,.13),Vector2(.045,-.03),Vector2(0,-.07),Vector2(-.045,-.03)],.032,skin)
 	Geo.link(head,Vector3(-.065,.04,-.137),Vector3(0,.056,-.169),.006,dark)
@@ -230,3 +238,14 @@ func build_crest() -> void:
 	st.generate_normals()
 	st.index()
 	helper.instance(head,Vector3.ZERO,st.commit(),skin)
+
+
+func surface_height(x: float, y: float, noise: FastNoiseLite, seed_value: int) -> float:
+	var grain := noise.get_noise_2d(x,y)*.15
+	if seed_value==17:
+		return .5+.30*sin(y*.38+sin(x*.09)*1.4)+grain
+	var row := floori(y/12.0)
+	var u := fposmod(x+float(row%2)*8.0,16.0)/16.0-.5
+	var v := fposmod(y,12.0)/12.0-.5
+	var scale_height := maxf(0.0,1.0-u*u*4.5-v*v*5.0)
+	return .20+.70*scale_height+grain
