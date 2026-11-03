@@ -35,7 +35,7 @@ func run() -> void:
 	print("MODEL BUDGET: %d meshes / %d triangles" % [meshes,triangles])
 	check(meshes<=70 and triangles<=35000,"Model geometry budget")
 	review.model.animate(PI/2,1.0,true)
-	check(review.model.knees[0].rotation.x<-.5 and review.model.arm_right.rotation.x<-1.0,"Knee and aiming joints animate")
+	check(review.model.knees[0].rotation.x<-.5 and review.model.arm_right.rotation.x>1.0,"Knee and aiming joints animate")
 	var start_yaw: float=review.yaw
 	var touch := InputEventScreenTouch.new()
 	touch.index=0

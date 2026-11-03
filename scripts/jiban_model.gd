@@ -198,7 +198,7 @@ func build_arm(side: int) -> void:
 	else:
 		arm_right=arm
 		var gun := joint(elbow,Vector3(0,-.34,-.025),"ServicePistol")
-		gun.rotation.x=PI/2
+		gun.rotation.x=-PI/2
 		var pistol = load("res://scripts/service_weapon.gd").new()
 		gun.add_child(pistol)
 func build_leg(side: int) -> void:
@@ -292,12 +292,12 @@ func pose(phase: float, movement: float, running: float, aiming: float, directio
 			knees[i].rotation.x=-.35
 			ankles[i].rotation.x=.12
 	var arm_swing := cos(phase-.20)*movement*lerpf(.30,.48,running)
-	arm_left.rotation.x=lerpf(-arm_swing,-.65,aiming)
-	arm_right.rotation.x=lerpf(arm_swing,-1.45,aiming)
+	arm_left.rotation.x=lerpf(.06-arm_swing,.65,aiming)
+	arm_right.rotation.x=lerpf(.06+arm_swing,PI/2-.12-upper_body.rotation.x,aiming)
 	arm_left.rotation.z=.035*movement*(1-aiming)
 	arm_right.rotation.z=-.035*movement*(1-aiming)
-	elbows[0].rotation.x=lerpf(-.18-running*.45-maxf(arm_swing,0)*.45,-.6,aiming)
-	elbows[1].rotation.x=lerpf(-.20-running*.45-maxf(-arm_swing,0)*.45,-.12,aiming)
+	elbows[0].rotation.x=lerpf(.14+running*.40+maxf(-arm_swing,0)*.55,.6,aiming)
+	elbows[1].rotation.x=lerpf(.14+running*.40+maxf(arm_swing,0)*.55,.12,aiming)
 
 func merge_parts(parent: Node3D) -> void:
 	# Geo.box uses an unanimated Node3D wrapper; bake that transform before batching.
