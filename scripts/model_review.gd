@@ -205,7 +205,7 @@ func select_model(index: int) -> void:
 	distance=8.8 if comparison_selected else (4.35 if creature_selected else 3.65)
 	pitch=.08
 	yaw=-.35
-	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión 5" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 5"
+	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión integral" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 5"
 	if mask_selected:
 		title.text="MASK / BIORON\nModelo 3D · revisión 1"
 	if comparison_selected:

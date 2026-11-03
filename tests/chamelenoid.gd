@@ -68,8 +68,13 @@ func run() -> void:
 	check(mesh_count<=70 and triangle_count<=35000,"Creature geometry stays in budget")
 	var creature=studio.model
 	check(creature.ankles.size()==2,"Feet retain articulated ankle joints")
+	check(creature.wrists.size()==2,"Hands retain independent wrist joints")
 	for frame in range(48):
 		creature.animate(TAU*frame/48.0,1)
+		for hand_index in range(2):
+			var inward:=Vector3.RIGHT if hand_index==0 else Vector3.LEFT
+			var palm: Vector3=-creature.wrists[hand_index].global_basis.z.normalized()
+			check(palm.dot(inward)>.85,"Walking palm faces thigh")
 		for ankle in creature.ankles:
 			check(ankle.global_position.y>.05 and ankle.global_position.y<.23,"Walking foot stays above floor")
 	creature.animate(0,0,.78)
