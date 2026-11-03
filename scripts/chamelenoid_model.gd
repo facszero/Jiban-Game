@@ -1,6 +1,9 @@
 extends Node3D
 ## Segmented organic model based on the approved concept sheet; front is -Z.
 const MeshTools = preload("res://scripts/jiban_model.gd")
+const GAME_SCALE := 1.1
+const BODY_WIDTH := 1.25
+const BODY_DEPTH := 1.22
 const Geo = preload("res://scripts/geometry.gd")
 var arms: Array[Node3D] = []
 var elbows: Array[Node3D] = []
@@ -55,6 +58,12 @@ func _ready() -> void:
 	for side in [-1,1]:
 		build_arm(side)
 		build_leg(side)
+	# Broaden anatomy without enlarging the head or stretching the legs vertically.
+	torso.scale=Vector3(BODY_WIDTH,1,BODY_DEPTH)
+	head.scale=Vector3(1.0/BODY_WIDTH,1,1.0/BODY_DEPTH)
+	for hip in hips:
+		hip.position.x*=1.18
+		hip.scale=Vector3(1.22,1,1.20)
 	helper.merge_parts(self)
 	helper.free()
 
@@ -210,7 +219,7 @@ func animate(phase: float, movement: float, attack_time: float = -1.0) -> void:
 	elbows[0].rotation.x=-.18
 	elbows[1].rotation.x=-.18
 	torso.rotation.y=sin(phase)*movement*.045
-	torso.rotation.x=0
+	torso.rotation.x=-.035
 	if attack_time>=0:
 		var pull := clampf(attack_time/.65,0,1)
 		var release := clampf((attack_time-.65)/.18,0,1)

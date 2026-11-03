@@ -49,6 +49,9 @@ jobs:
           timeout 30 "$GODOT" --headless --script res://tests/mask.gd 2>&1 | tee /tmp/mask.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/mask.log
           grep -q 'MASK RESULT: 0 failures' /tmp/mask.log
+          timeout 30 "$GODOT" --headless --script res://tests/comparison.gd 2>&1 | tee /tmp/comparison.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/comparison.log
+          grep -q 'COMPARISON RESULT: 0 failures' /tmp/comparison.log
           mkdir -p exports/web
           WEB_BUILD="jiban-${GITHUB_SHA:0:12}"
           "$GODOT" --headless --export-release Web "exports/web/${WEB_BUILD}.html" 2>&1 | tee /tmp/export.log

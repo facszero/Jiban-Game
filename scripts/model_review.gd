@@ -19,6 +19,7 @@ var spin_toggle: CheckButton
 var title: Label
 var creature_selected := false
 var mask_selected := false
+var comparison_selected := false
 var preview_attack := -1.0
 var attack_button: Button
 var selector: OptionButton
@@ -75,6 +76,7 @@ func _ready() -> void:
 	selector.add_item("JIBAN")
 	selector.add_item("CHAMELENOID")
 	selector.add_item("MASK / BIORON")
+	selector.add_item("COMPARAR LOS TRES")
 	selector.item_selected.connect(select_model)
 	var exit_button := Button.new()
 	frame.add_child(exit_button)
@@ -126,11 +128,11 @@ func _ready() -> void:
 	help.text="Arrastrá para girar · + / − para acercar · la partida permanece en pausa"
 	help.mouse_filter=Control.MOUSE_FILTER_IGNORE
 func update_camera() -> void:
-	var target := Vector3(0,1.20 if creature_selected else 1.05,0)
+	var target := Vector3(0,1.25 if comparison_selected else (1.20 if creature_selected else 1.05),0)
 	camera.position=target+Vector3(sin(yaw)*cos(pitch),sin(pitch),-cos(yaw)*cos(pitch))*distance
 	camera.look_at(target)
 func zoom(amount: float) -> void:
-	distance=clampf(distance+amount,1.5,4.5)
+	distance=clampf(distance+amount,5.5 if comparison_selected else 1.5,10.5 if comparison_selected else 4.5)
 	update_camera()
 func stop_spin() -> void:
 	spinning=false
@@ -160,7 +162,9 @@ func orbit_input(event: InputEvent) -> void:
 		update_camera()
 func _process(delta: float) -> void:
 	phase+=delta*5.0
-	if creature_selected:
+	if comparison_selected:
+		model.animate_all(phase,walking)
+	elif creature_selected:
 		if preview_attack >= 0:
 			preview_attack+=delta
 			if preview_attack>1.45:
@@ -186,22 +190,30 @@ func select_model(index: int) -> void:
 	selector.select(index)
 	creature_selected=index==1
 	mask_selected=index==2
+	comparison_selected=index==3
 	viewport.remove_child(model)
 	model.free()
 	model=preload("res://scripts/chamelenoid_model.gd").new() if creature_selected else preload("res://scripts/jiban_model.gd").new()
 	if mask_selected:
 		model.free()
 		model=preload("res://scripts/mask_model.gd").new()
+	if comparison_selected:
+		model.free()
+		model=preload("res://scripts/character_comparison.gd").new()
 	viewport.add_child(model)
 	preview_attack=-1
-	distance=4.35 if creature_selected else 3.65
+	distance=8.8 if comparison_selected else (4.35 if creature_selected else 3.65)
 	pitch=.08
 	yaw=-.35
-	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión 4" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 5"
+	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión 5" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 5"
 	if mask_selected:
 		title.text="MASK / BIORON\nModelo 3D · revisión 1"
+	if comparison_selected:
+		title.text="COMPARACIÓN DE ESCALA\nMismo suelo · tamaños de la partida"
+		yaw=0.0
+		pitch=.05
 	attack_button.visible=creature_selected
-	gait_selector.visible=not creature_selected
+	gait_selector.visible=not creature_selected and not comparison_selected
 	for i in range(3):
 		gait_selector.set_item_text(i,("Mask: " if mask_selected else "Jiban: ")+["caminar","correr","apuntando"][i])
 	update_camera()

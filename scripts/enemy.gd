@@ -35,7 +35,7 @@ func _ready() -> void:
 	add_child(col)
 	model = preload("res://scripts/chamelenoid_model.gd").new() if heavy else preload("res://scripts/mask_model.gd").new()
 	add_child(model)
-	model.scale = Vector3.ONE * (1.1 if heavy else scale_factor)
+	model.scale = Vector3.ONE * (preload("res://scripts/chamelenoid_model.gd").GAME_SCALE if heavy else scale_factor)
 	eye = Geo.light(self, Vector3(0, 1.5, -0.4), Color(1, 0.12, 0.03), 0.0, 2.0)
 	player = get_tree().get_first_node_in_group("player")
 
