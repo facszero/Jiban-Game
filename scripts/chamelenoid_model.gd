@@ -177,13 +177,17 @@ func build_head() -> void:
 	for side in [-1,1]:
 		var socket := leaf(head,Vector3(side*.087,.193,-.113),.112,.185,skin)
 		socket.rotation.z=-side*.45
-		var eye_points := [Vector2(0,.060),Vector2(.043,.028),Vector2(.042,-.021),Vector2(0,-.058),Vector2(-.038,-.022),Vector2(-.040,.027)]
-		plate(head,Vector3(side*.087,.193,-.137),eye_points,.008,gold).rotation.z=-side*.45
-		plate(head,Vector3(side*.087,.186,-.150),[Vector2(0,.029),Vector2(.006,.013),Vector2(.007,-.02),Vector2(0,-.03),Vector2(-.007,-.019),Vector2(-.006,.012)],.003,dark).rotation.z=-side*.45
+		# Inner corners sit lower than the outer corners: a focused predatory gaze.
+		var eye_points := [Vector2(-.047,-.006),Vector2(.040,.036),Vector2(.052,.018),Vector2(.025,-.023),Vector2(-.019,-.028)]
+		if side<0:
+			for i in range(eye_points.size()): eye_points[i].x*=-1
+			eye_points.reverse()
+		plate(head,Vector3(side*.087,.193,-.145),eye_points,.010,gold)
+		plate(head,Vector3(side*.087,.190,-.161),[Vector2(0,.020),Vector2(.006,.009),Vector2(.006,-.015),Vector2(0,-.022),Vector2(-.006,-.015),Vector2(-.006,.009)],.003,dark)
 		leaf(head,Vector3(side*.107,.079,-.110),.10,.19,skin).rotation.z=-side*.3
 	for side in [-1,1]:
-		var brow := leaf(head,Vector3(side*.078,.252,-.139),.055,.17,skin)
-		brow.rotation.z=side*.75
+		var brow := leaf(head,Vector3(side*.078,.231,-.157),.050,.17,skin)
+		brow.rotation.z=-side*1.02
 	for side in [-1,1]:
 		for i in range(4):
 			var scale_plate:=leaf(head,Vector3(side*.10,.07+i*.065,.087),.09,.13,skin)
@@ -191,8 +195,8 @@ func build_head() -> void:
 			scale_plate.rotation.z=side*.4
 	# Brow ridge, tapered snout, mouth seam and pointed lower jaw.
 	plate(head,Vector3(0,.12,-.145),[Vector2(-.04,.13),Vector2(.04,.13),Vector2(.045,-.03),Vector2(0,-.07),Vector2(-.045,-.03)],.032,skin)
-	Geo.link(head,Vector3(-.065,.04,-.137),Vector3(0,.056,-.169),.006,dark)
-	Geo.link(head,Vector3(0,.056,-.169),Vector3(.065,.04,-.137),.006,dark)
+	Geo.link(head,Vector3(-.065,.042,-.149),Vector3(0,.041,-.180),.006,dark)
+	Geo.link(head,Vector3(0,.041,-.180),Vector3(.065,.042,-.149),.006,dark)
 	leaf(head,Vector3(0,.005,-.135),.13,.115,edge)
 	for side in [-1,1]:
 		for i in range(3):
