@@ -11,8 +11,8 @@ func run() -> void:
 	studio.set_process(false)
 	studio.yaw=PI/2
 	studio.update_camera()
-	for i in range(4):
-		studio.model.pose(TAU*i/4.0,1.0,0.0,0.0,Vector2(0,-1),true)
+	for i in range(16):
+		studio.model.pose(TAU*(i%8)/8.0,1.0,0.0 if i<8 else 1.0,0.0,Vector2(0,-1),true)
 		for f in range(4):
 			await process_frame
 		await RenderingServer.frame_post_draw

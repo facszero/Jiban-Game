@@ -64,7 +64,7 @@ func _ready() -> void:
 	title = Label.new()
 	frame.add_child(title)
 	title.position=Vector2(30,24)
-	title.text="JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 3"
+	title.text="JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 4"
 	title.add_theme_font_size_override("font_size",23)
 	title.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	selector = OptionButton.new()
@@ -166,7 +166,7 @@ func _process(delta: float) -> void:
 		model.animate(phase,1.0 if walking and preview_attack<0 else 0.0,preview_attack)
 	else:
 		preview_walk_blend=lerpf(preview_walk_blend,1.0 if walking else 0.0,1.0-exp(-delta*10.0))
-		model.update_locomotion(delta,Vector3(0,0,-(6.5 if preview_run else 4.0)*preview_walk_blend),preview_run,preview_aim,true)
+		model.update_locomotion(delta,Vector3(0,0,-(4.6 if preview_run else 2.0)*preview_walk_blend),preview_run,preview_aim,true)
 	if spinning:
 		yaw+=delta*.4
 		update_camera()
@@ -191,7 +191,7 @@ func select_model(index: int) -> void:
 	distance=4.35 if creature_selected else 3.65
 	pitch=.08
 	yaw=-.35
-	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión 3" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 3"
+	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión 3" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 4"
 	attack_button.visible=creature_selected
 	gait_selector.visible=not creature_selected
 	update_camera()

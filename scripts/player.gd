@@ -4,8 +4,8 @@ signal fired(origin: Vector3, target: Vector3)
 signal damaged
 signal died
 const Geo = preload("res://scripts/geometry.gd")
-@export var walk_speed := 4.0
-@export var run_speed := 6.5
+@export var walk_speed := 2.0
+@export var run_speed := 4.6
 @export var damage := 25.0
 @export var sensitivity := 0.0025
 var health := 180.0
@@ -32,6 +32,7 @@ var weapon_probe := SphereShape3D.new()
 var flash: OmniLight3D
 var step_clock := 0.0
 var last_visual_yaw := 0.0
+var combat_hold := 0.0
 var lamp: SpotLight3D
 
 func _ready() -> void:
@@ -122,12 +123,26 @@ func _physics_process(delta: float) -> void:
 	if global_position.y < -12.0:
 		take_damage(999.0)
 	step_clock += Vector2(velocity.x, velocity.z).length() * delta * 2.2
-	var turn_speed := angle_difference(last_visual_yaw,rotation.y)/maxf(delta,.001)
-	last_visual_yaw=rotation.y
-	body_model.update_locomotion(delta,global_basis.inverse()*velocity,running,Input.is_action_pressed("aim") or Input.is_action_pressed("fire"),is_on_floor(),turn_speed)
+	var combat := Input.is_action_pressed("aim") or Input.is_action_pressed("fire")
+	combat_hold = .35 if combat else maxf(0.0, combat_hold-delta)
+	update_body_heading(delta, combat or combat_hold>0.0)
+	var turn_speed := angle_difference(last_visual_yaw,body_model.global_rotation.y)/maxf(delta,.001)
+	last_visual_yaw=body_model.global_rotation.y
+	body_model.update_locomotion(delta,body_model.global_basis.inverse()*velocity,running,combat or combat_hold>0.0,is_on_floor(),turn_speed)
 	update_camera(delta)
 	if Input.is_action_pressed("fire"):
 		shoot()
+
+func update_body_heading(delta: float, combat: bool) -> void:
+	# Camera/input yaw remains independent: only the visible body turns to travel.
+	var local_velocity := global_basis.inverse()*velocity
+	var planar := Vector2(local_velocity.x,local_velocity.z)
+	var desired := last_visual_yaw
+	if combat or first_person:
+		desired = global_rotation.y
+	elif planar.length()>.15:
+		desired = global_rotation.y+atan2(-planar.x,-planar.y)
+	body_model.global_rotation.y = lerp_angle(last_visual_yaw,desired,1.0-exp(-delta*(18.0 if combat else 9.0)))
 
 func update_camera(delta: float) -> void:
 	pivot.rotation.x = pitch

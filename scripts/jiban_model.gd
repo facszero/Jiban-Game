@@ -230,46 +230,74 @@ func update_locomotion(delta: float, local_velocity: Vector3, running: bool, aim
 	turn_blend=lerpf(turn_blend,clampf(turn_speed,-2,2),weight)
 	if speed>.08:
 		travel=travel.lerp(Vector2(local_velocity.x,local_velocity.z).normalized(),weight).normalized()
-		locomotion_phase+=speed*delta*2.2
+		# Match ground travel during the stance portion to the actual stride length.
+		var stride := lerpf(.35,.46,run_blend)*lerpf(1.0,.72,aim_blend)
+		var stance := lerpf(.60,.42,run_blend)
+		locomotion_phase+=speed*delta*TAU*stance/(2.0*stride)
 	pose(locomotion_phase,move_blend,run_blend,aim_blend,travel,grounded)
 
 func animate(phase: float, movement: float, aiming: bool) -> void:
 	# Studio and deterministic pose tests use the same gait as gameplay.
 	pose(phase,movement,0,1.0 if aiming else 0.0,Vector2(0,-1),true)
 
+# Authored contact, compression, passing and recovery poses. Values interpolate
+# smoothly; leg joints solve the foot targets so the armor stays articulated.
+const SWING_POSES = [Vector4(0,1,0,0), Vector4(.20,.85,.65,-.30), Vector4(.50,-.10,1,.08), Vector4(.80,-.85,.38,.16), Vector4(1,-1,0,.10)]
+func swing_pose(t: float) -> Vector3:
+	for i in range(SWING_POSES.size()-1):
+		var a: Vector4 = SWING_POSES[i]
+		var b: Vector4 = SWING_POSES[i+1]
+		if t<=b.x:
+			var w := smoothstep(a.x,b.x,t)
+			return Vector3(lerpf(a.y,b.y,w),lerpf(a.z,b.z,w),lerpf(a.w,b.w,w))
+	return Vector3(-1,0,.10)
+
 func pose(phase: float, movement: float, running: float, aiming: float, direction: Vector2, grounded: bool) -> void:
-	var stride_length := lerpf(.29,.41,running)*lerpf(1.0,.72,aiming)
-	var bob := (1-cos(phase*2))*.009*movement*(1+running)+lerpf(.045,.105,running)*movement
-	pelvis.position=Vector3(sin(phase)*.012*movement,.99-bob,0)
-	pelvis.rotation.y=sin(phase)*.045*movement
-	upper_body.position.y=1.2-bob
-	upper_body.rotation=Vector3(-.035*movement-.045*running, -sin(phase)*.055*movement*(1-aiming), -sin(phase)*.018*movement-turn_blend*.018)
+	var stride_length := lerpf(.35,.46,running)*lerpf(1.0,.72,aiming)
+	var stance := lerpf(.60,.42,running)
+	# Compression after contact, rising over the supporting leg.
+	var step := fposmod(phase/PI,1.0)
+	var compression := sin(PI*clampf(step/.38,0,1)) if step<.38 else 0.0
+	var bob := (.020+pow(cos(phase),2)*lerpf(.065,.13,running)+compression*.008)*movement
+	pelvis.position=Vector3(sin(phase)*.018*movement,.99-bob,0)
+	pelvis.rotation.y=sin(phase)*.065*movement
+	upper_body.position=Vector3(pelvis.position.x*.6,1.2-bob,0)
+	upper_body.rotation=Vector3(-(.025+.065*running)*movement, -sin(phase)*.075*movement*(1-aiming), -sin(phase)*.022*movement-turn_blend*.025*movement)
 	var legs := [leg_left,leg_right]
 	for i in range(2):
 		var cycle := fposmod(phase/TAU+i*.5,1.0)
-		var swing := clampf((cycle-.60)/.40,0,1)
-		var z := lerpf(-stride_length,stride_length,cycle/.60) if cycle<.60 else stride_length*cos(PI*swing)
-		var lift := sin(PI*swing)*lerpf(.105,.18,running) if cycle>=.60 else 0.0
+		var swing := clampf((cycle-stance)/(1.0-stance),0,1)
+		var key := swing_pose(swing)
+		var z := lerpf(-stride_length,stride_length,cycle/stance) if cycle<stance else stride_length*key.x
+		var lift := key.y*lerpf(.13,.23,running) if cycle>=stance else 0.0
+		var roll := key.z if cycle>=stance else lerpf(.10,0.0,clampf(cycle/.10,0,1))
 		z*=movement
 		lift*=movement
+		roll*=movement
+		# A small heel lift keeps the rotating sole above the flat floor.
+		lift+=absf(roll)*.12
 		var dy := .835-bob-lift
 		var distance := clampf(sqrt(dy*dy+z*z),.15,.849)
 		var knee_angle := acos(clampf((distance*distance-.39*.39-.46*.46)/(2*.39*.46),-1,1))
 		var hip_offset := acos(clampf((.39*.39+distance*distance-.46*.46)/(2*.39*distance),-1,1))
-		legs[i].rotation.x=atan2(-z*(-direction.y),dy)+hip_offset
-		legs[i].rotation.z=atan2(z*direction.x,dy)
+		var lateral := z*direction.x
+		var sagittal := z*(-direction.y)
+		var side_angle := atan2(lateral,dy)
+		var forward_angle := atan2(-sagittal,sqrt(dy*dy+lateral*lateral))+hip_offset
+		legs[i].basis=Basis(Vector3.BACK,side_angle)*Basis(Vector3.RIGHT,forward_angle)
 		knees[i].rotation.x=-knee_angle
-		ankles[i].rotation.x=-(legs[i].rotation.x-knee_angle)+sin(PI*swing)*.16*movement
-		ankles[i].rotation.z=-legs[i].rotation.z
+		ankles[i].basis=(legs[i].basis*knees[i].basis).inverse()*Basis(Vector3.RIGHT,roll)
 		if not grounded:
 			legs[i].rotation.x=.18 if i==0 else -.10
 			knees[i].rotation.x=-.35
 			ankles[i].rotation.x=.12
-	var arm_swing := sin(phase)*movement*lerpf(.25,.40,running)
+	var arm_swing := cos(phase-.20)*movement*lerpf(.30,.48,running)
 	arm_left.rotation.x=lerpf(-arm_swing,-.65,aiming)
 	arm_right.rotation.x=lerpf(arm_swing,-1.45,aiming)
-	elbows[0].rotation.x=lerpf(-.18-absf(arm_swing)*.4,-.6,aiming)
-	elbows[1].rotation.x=lerpf(-.20-absf(arm_swing)*.3,-.12,aiming)
+	arm_left.rotation.z=.035*movement*(1-aiming)
+	arm_right.rotation.z=-.035*movement*(1-aiming)
+	elbows[0].rotation.x=lerpf(-.18-running*.45-maxf(arm_swing,0)*.45,-.6,aiming)
+	elbows[1].rotation.x=lerpf(-.20-running*.45-maxf(-arm_swing,0)*.45,-.12,aiming)
 
 func merge_parts(parent: Node3D) -> void:
 	# Geo.box uses an unanimated Node3D wrapper; bake that transform before batching.
