@@ -66,6 +66,14 @@ func run() -> void:
 	measure(studio.model)
 	print("CHAMELENOID BUDGET: %d meshes / %d triangles" % [mesh_count,triangle_count])
 	check(mesh_count<=70 and triangle_count<=35000,"Creature geometry stays in budget")
+	var creature=studio.model
+	check(creature.ankles.size()==2,"Feet retain articulated ankle joints")
+	for frame in range(48):
+		creature.animate(TAU*frame/48.0,1)
+		for ankle in creature.ankles:
+			check(ankle.global_position.y>.05 and ankle.global_position.y<.23,"Walking foot stays above floor")
+	creature.animate(0,0,.78)
+	check(creature.elbows[1].global_position.z<creature.arms[1].global_position.z,"Strike reaches forward")
 	studio.model.animate(0,0,.5)
 	check(studio.model.arms[1].rotation.x>.4,"Windup visibly raises the striking arm")
 	studio.select_model(0)

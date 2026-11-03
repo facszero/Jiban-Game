@@ -41,7 +41,7 @@ func _ready() -> void:
 
 func animate_model(delta: float) -> void:
 	if heavy:
-		gait += Vector2(velocity.x, velocity.z).length() * delta * 3.0
+		gait += Vector2(velocity.x, velocity.z).length() * delta * preload("res://scripts/chamelenoid_model.gd").GAIT_PER_METER
 		model.animate(gait, 1.0 if state == "PERSIGUIENDO" else 0.0, attack_elapsed)
 		hit_flash = maxf(0.0, hit_flash - delta)
 		eye.light_energy = 2.5 if hit_flash > 0 else (0.7 if state == "PREPARANDO" else 0.0)

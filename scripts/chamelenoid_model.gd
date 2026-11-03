@@ -9,6 +9,8 @@ var arms: Array[Node3D] = []
 var elbows: Array[Node3D] = []
 var hips: Array[Node3D] = []
 var knees: Array[Node3D] = []
+var ankles: Array[Node3D] = []
+const GAIT_PER_METER := 4.5
 var torso: Node3D
 var head: Node3D
 var helper: Node3D
@@ -201,34 +203,64 @@ func build_leg(side: int) -> void:
 	leaf(knee,Vector3(0,-.22,-.082),.15,.35,skin)
 	for i in range(3):
 		Geo.ellipsoid(knee,Vector3(side*.044,-.12-i*.07,-.09),Vector3(.025,.03,.018),edge)
-	shell(knee,Vector3(0,-.46,-.04),[Vector3(-.09,.078,.13),Vector3(-.065,.085,.145),Vector3(-.02,.074,.11),Vector3(.045,.058,.068)],skin)
+	var ankle: Node3D = helper.joint(knee,Vector3(0,-.46,0),"Ankle")
+	ankles.append(ankle)
+	shell(ankle,Vector3(0,0,-.04),[Vector3(-.09,.078,.13),Vector3(-.065,.085,.145),Vector3(-.02,.074,.11),Vector3(.045,.058,.068)],skin)
 	for i in range(3):
-		Geo.link(knee,Vector3(-.05+i*.05,-.51,-.13),Vector3(-.05+i*.05,-.535,-.20),.019,claw)
+		Geo.link(ankle,Vector3(-.05+i*.05,-.05,-.13),Vector3(-.05+i*.05,-.075,-.20),.019,claw)
 
 # Shared by the combat actor and the inspection studio. attack_time < 0 means idle.
 func animate(phase: float, movement: float, attack_time: float = -1.0) -> void:
-	var stride := sin(phase)*movement*.30
-	hips[0].rotation.x=stride
-	hips[1].rotation.x=-stride
-	knees[0].rotation.x=-maxf(0,sin(phase))*movement*.4
-	knees[1].rotation.x=-maxf(0,-sin(phase))*movement*.4
-	arms[0].rotation.x=-stride*.7
-	arms[1].rotation.x=stride*.7
-	arms[0].rotation.z=-.10
-	arms[1].rotation.z=.10
-	elbows[0].rotation.x=-.18
-	elbows[1].rotation.x=-.18
-	torso.rotation.y=sin(phase)*movement*.045
-	torso.rotation.x=-.035
+	# Long support phase, low foot clearance and a short compression after contact.
+	# +X raises a hanging arm towards the model's forward direction (-Z).
+	var moving := clampf(movement,0,1)
+	if attack_time>=0: moving=0
+	var cycle := fposmod(phase/TAU,1.0)
+	var contact := fposmod(cycle*2.0,1.0)
+	var compression := sin(PI*clampf(contact/.24,0,1))*.025*moving
+	var sway := cos(phase)*.032*moving
+	var pelvis_y := .94-compression
+	var stride := sin(phase)
+	for i in range(2):
+		var side := -1.0 if i==0 else 1.0
+		var step := fposmod(cycle+i*.5,1.0)
+		var foot_z: float
+		var lift := 0.0
+		if step<.66:
+			foot_z=lerpf(-.28,.28,step/.66)
+		else:
+			var swing := (step-.66)/.34
+			foot_z=lerpf(.28,-.28,smoothstep(0,1,swing))
+			lift=sin(swing*PI)*.10
+		foot_z*=moving
+		lift*=moving
+		hips[i].position=Vector3(side*.14*1.18+sway,pelvis_y,0)
+		# Solve the hip/knee chain, keeping the sole level through the step.
+		var down := pelvis_y-(.09+lift)
+		var reach := clampf(Vector2(down,foot_z).length(),.05,.889)
+		var bend := acos(clampf((.43*.43+.46*.46-reach*reach)/(2*.43*.46),-1,1))
+		var hip_angle := atan2(-foot_z,down)+acos(clampf((.43*.43+reach*reach-.46*.46)/(2*.43*reach),-1,1))
+		hips[i].rotation.x=hip_angle
+		knees[i].rotation.x=bend-PI
+		ankles[i].rotation.x=-hip_angle-knees[i].rotation.x
+		arms[i].rotation=Vector3(.16+side*sin(phase-.35)*.16*moving,0,side*.24)
+		elbows[i].rotation.x=.28+side*sin(phase-.65)*.07*moving
+	torso.rotation=Vector3(-.13-.025*moving,-stride*.065*moving,-sway*.7)
+	head.rotation=Vector3(.10,stride*.035*moving,sway*.4)
 	if attack_time>=0:
-		var pull := clampf(attack_time/.65,0,1)
-		var release := clampf((attack_time-.65)/.18,0,1)
-		var recover := clampf((attack_time-.83)/.62,0,1)
-		arms[1].rotation.x=lerpf(.75,-1.45,release)*(1-recover)*pull
-		arms[1].rotation.z=lerpf(.65,-.20,release)*(1-recover)
-		elbows[1].rotation.x=-.7*(1-release)-.15
-		torso.rotation.y=lerpf(-.22,.28,release)*(1-recover)*pull
-		torso.rotation.x=.10*release*(1-recover)
+		var pull := smoothstep(0,.65,attack_time)
+		var release := smoothstep(.65,.83,attack_time)
+		var recover := smoothstep(.83,1.45,attack_time)
+		var weight := 1-recover
+		arms[1].rotation.x=lerpf(.16,lerpf(.75,1.55,release),pull*weight)
+		arms[1].rotation.z=lerpf(.24,lerpf(.65,-.20,release),pull*weight)
+		elbows[1].rotation.x=lerpf(.28,lerpf(.85,.18,release),pull*weight)
+		torso.rotation.y=lerpf(-.22,.28,release)*weight*pull
+		torso.rotation.x-=.10*release*weight
+	# Rotate around the waist instead of tipping the whole chest around ground level.
+	var pivot := Vector3(0,.99,0)
+	torso.position=pivot-Quaternion.from_euler(torso.rotation)*pivot
+	torso.position+=Vector3(sway,pelvis_y-.99,0)
 
 
 func build_crest() -> void:
