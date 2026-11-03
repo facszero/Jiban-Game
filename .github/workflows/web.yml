@@ -43,6 +43,9 @@ jobs:
           timeout 30 "$GODOT" --headless --script res://tests/locomotion.gd 2>&1 | tee /tmp/locomotion.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/locomotion.log
           grep -q 'LOCOMOTION RESULT: 0 failures' /tmp/locomotion.log
+          timeout 30 "$GODOT" --headless --script res://tests/muzzle.gd 2>&1 | tee /tmp/muzzle.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/muzzle.log
+          grep -q 'MUZZLE RESULT: 0 failures' /tmp/muzzle.log
           mkdir -p exports/web
           "$GODOT" --headless --export-release Web exports/web/index.html 2>&1 | tee /tmp/export.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/export.log

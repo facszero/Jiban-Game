@@ -2,8 +2,14 @@ extends Node3D
 ## Same service pistol in both perspectives. Visual geometry only.
 const Armor = preload("res://scripts/jiban_model.gd")
 const Geo = preload("res://scripts/geometry.gd")
+const MUZZLE_POSITION := Vector3(0, 0, -0.181)
+var muzzle: Marker3D
 @export var include_hand := false
 func _ready() -> void:
+	muzzle = Marker3D.new()
+	muzzle.name = "Muzzle"
+	add_child(muzzle)
+	muzzle.position = MUZZLE_POSITION
 	var mesh_tools = Armor.new()
 	var silver = mesh_tools.silver
 	var dark = mesh_tools.rubber

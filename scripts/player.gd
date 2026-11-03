@@ -24,6 +24,7 @@ var arm_left: Node3D
 var arm_right: Node3D
 var leg_left: Node3D
 var leg_right: Node3D
+var view_pistol: Node3D
 var view_weapon: Node3D
 const WEAPON_REST := Vector3(0.23, -0.22, -0.77)
 var weapon_clearance := 1.0
@@ -215,8 +216,17 @@ func shoot() -> void:
 		target = hit.position
 		if hit.collider.has_method("take_damage"):
 			hit.collider.take_damage(damage)
+	# Keep physical damage resolution above; render the shot from the visible barrel.
+	var visual_origin := muzzle
+	if first_person and view_weapon.visible:
+		visual_origin = view_pistol.get_node("Muzzle").global_position
+		# A visual ray must not cross a surface between the barrel and resolved impact.
+		var visual_hit := ray(visual_origin, target)
+		if not visual_hit.is_empty():
+			target = visual_hit.position
+	flash.global_position = visual_origin
 	flash.light_energy = 7.0
-	fired.emit(muzzle, target)
+	fired.emit(visual_origin, target)
 
 func reload_weapon() -> void:
 	if ammo < 12 and reserve > 0 and reload_time <= 0.0:
@@ -234,7 +244,7 @@ func take_damage(amount: float) -> void:
 
 func build_view_weapon() -> void:
 	view_weapon.position = WEAPON_REST
-	var pistol := preload("res://scripts/service_weapon.gd").new()
-	pistol.include_hand = true
-	view_weapon.add_child(pistol)
+	view_pistol = preload("res://scripts/service_weapon.gd").new()
+	view_pistol.include_hand = true
+	view_weapon.add_child(view_pistol)
 
