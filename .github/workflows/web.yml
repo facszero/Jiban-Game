@@ -46,9 +46,14 @@ jobs:
           timeout 30 "$GODOT" --headless --script res://tests/muzzle.gd 2>&1 | tee /tmp/muzzle.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/muzzle.log
           grep -q 'MUZZLE RESULT: 0 failures' /tmp/muzzle.log
+          timeout 30 "$GODOT" --headless --script res://tests/mask.gd 2>&1 | tee /tmp/mask.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/mask.log
+          grep -q 'MASK RESULT: 0 failures' /tmp/mask.log
           mkdir -p exports/web
-          "$GODOT" --headless --export-release Web exports/web/index.html 2>&1 | tee /tmp/export.log
+          WEB_BUILD="jiban-${GITHUB_SHA:0:12}"
+          "$GODOT" --headless --export-release Web "exports/web/${WEB_BUILD}.html" 2>&1 | tee /tmp/export.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/export.log
+          mv "exports/web/${WEB_BUILD}.html" exports/web/index.html
           touch exports/web/.nojekyll
       - uses: actions/upload-artifact@v4
         with:

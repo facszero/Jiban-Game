@@ -18,6 +18,7 @@ var dragging := false
 var spin_toggle: CheckButton
 var title: Label
 var creature_selected := false
+var mask_selected := false
 var preview_attack := -1.0
 var attack_button: Button
 var selector: OptionButton
@@ -64,7 +65,7 @@ func _ready() -> void:
 	title = Label.new()
 	frame.add_child(title)
 	title.position=Vector2(30,24)
-	title.text="JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 4"
+	title.text="JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 5"
 	title.add_theme_font_size_override("font_size",23)
 	title.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	selector = OptionButton.new()
@@ -73,6 +74,7 @@ func _ready() -> void:
 	selector.size=Vector2(310,55)
 	selector.add_item("JIBAN")
 	selector.add_item("CHAMELENOID")
+	selector.add_item("MASK / BIORON")
 	selector.item_selected.connect(select_model)
 	var exit_button := Button.new()
 	frame.add_child(exit_button)
@@ -183,17 +185,25 @@ func close() -> void:
 func select_model(index: int) -> void:
 	selector.select(index)
 	creature_selected=index==1
+	mask_selected=index==2
 	viewport.remove_child(model)
 	model.free()
 	model=preload("res://scripts/chamelenoid_model.gd").new() if creature_selected else preload("res://scripts/jiban_model.gd").new()
+	if mask_selected:
+		model.free()
+		model=preload("res://scripts/mask_model.gd").new()
 	viewport.add_child(model)
 	preview_attack=-1
 	distance=4.35 if creature_selected else 3.65
 	pitch=.08
 	yaw=-.35
-	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión 3" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 4"
+	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión 4" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 5"
+	if mask_selected:
+		title.text="MASK / BIORON\nModelo 3D · revisión 1"
 	attack_button.visible=creature_selected
 	gait_selector.visible=not creature_selected
+	for i in range(3):
+		gait_selector.set_item_text(i,("Mask: " if mask_selected else "Jiban: ")+["caminar","correr","apuntando"][i])
 	update_camera()
 
 

@@ -33,66 +33,11 @@ func _ready() -> void:
 	col.shape = capsule
 	col.position.y = capsule.height / 2.0
 	add_child(col)
-	model = preload("res://scripts/chamelenoid_model.gd").new() if heavy else Node3D.new()
+	model = preload("res://scripts/chamelenoid_model.gd").new() if heavy else preload("res://scripts/mask_model.gd").new()
 	add_child(model)
 	model.scale = Vector3.ONE * (1.1 if heavy else scale_factor)
-	build_creature()
 	eye = Geo.light(self, Vector3(0, 1.5, -0.4), Color(1, 0.12, 0.03), 0.0, 2.0)
 	player = get_tree().get_first_node_in_group("player")
-
-func build_creature() -> void:
-	if heavy:
-		return
-	# Reference-based low-poly adaptations; no ripped textures or meshes.
-	var dark := Geo.material(Color(0.045, 0.055, 0.065), 0.25)
-	var pale := Geo.material(Color(0.46, 0.51, 0.36), 0.25)
-	var skin := Geo.material(Color(0.19, 0.31, 0.24), 0.1)
-	var wine := Geo.material(Color(0.28, 0.08, 0.09), 0.1)
-	var body_mat := wine if heavy else dark
-	Geo.ellipsoid(model, Vector3(0, 1.14, 0), Vector3(0.75 if heavy else 0.57, 0.71, 0.39), body_mat)
-	Geo.ellipsoid(model, Vector3(0, 0.83, 0), Vector3(0.48, 0.3, 0.33), dark)
-	Geo.ellipsoid(model, Vector3(0, 1.65, 0), Vector3(0.45, 0.5, 0.4), skin if heavy else dark)
-	if heavy:
-		# Chamelenoid: tall central crest, pale orbital rings, burgundy shoulders.
-		Geo.ellipsoid(model, Vector3(0, 1.92, 0.01), Vector3(0.12, 0.37, 0.29), skin)
-		for side in [-1, 1]:
-			Geo.ellipsoid(model, Vector3(side * 0.145, 1.69, -0.165), Vector3(0.15, 0.21, 0.035), pale)
-			Geo.ellipsoid(model, Vector3(side * 0.145, 1.7, -0.191), Vector3(0.07, 0.085, 0.02), dark)
-			Geo.link(model, Vector3(side * 0.07, 1.75, -0.19), Vector3(side * 0.22, 1.8, -0.16), 0.04, skin)
-			Geo.ellipsoid(model, Vector3(side * 0.14, 1.53, -0.15), Vector3(0.18, 0.15, 0.13), skin)
-			for i in range(3):
-				Geo.ellipsoid(model, Vector3(side * 0.14, 1.3 - i * 0.13, -0.21), Vector3(0.24, 0.09, 0.045), skin)
-		Geo.link(model, Vector3(-0.13, 1.51, -0.2), Vector3(0, 1.55, -0.24), 0.025, dark)
-		Geo.link(model, Vector3(0, 1.55, -0.24), Vector3(0.13, 1.51, -0.2), 0.025, dark)
-	else:
-		# Masques: black hood, circular forehead mark and pale U-shaped mask.
-		Geo.ellipsoid(model, Vector3(0, 1.78, -0.19), Vector3(0.15, 0.15, 0.045), pale)
-		Geo.ellipsoid(model, Vector3(0, 1.52, -0.17), Vector3(0.29, 0.14, 0.07), pale)
-		for side in [-1, 1]:
-			Geo.ellipsoid(model, Vector3(side * 0.12, 1.59, -0.18), Vector3(0.1, 0.2, 0.065), pale)
-		Geo.box(model, Vector3(0, 1.13, -0.21), Vector3(0.04, 0.5, 0.03), pale)
-		Geo.box(model, Vector3(0, 0.88, -0.18), Vector3(0.49, 0.06, 0.05), pale)
-	for side in [-1, 1]:
-		var leg := Node3D.new()
-		model.add_child(leg)
-		leg.position = Vector3(side * 0.17, 0.83, 0)
-		Geo.ellipsoid(leg, Vector3(0, -0.19, 0), Vector3(0.24, 0.45, 0.26), body_mat)
-		Geo.ellipsoid(leg, Vector3(0, -0.56, 0), Vector3(0.22, 0.4, 0.24), skin if heavy else dark)
-		Geo.ellipsoid(leg, Vector3(0, -0.75, -0.07), Vector3(0.26, 0.16, 0.4), dark)
-		limbs.append(leg)
-		var arm := Node3D.new()
-		model.add_child(arm)
-		arm.position = Vector3(side * 0.4, 1.4, 0)
-		Geo.ellipsoid(arm, Vector3(0, -0.1, 0), Vector3(0.34 if heavy else 0.23, 0.25 if heavy else 0.35, 0.3), body_mat)
-		Geo.ellipsoid(arm, Vector3(side * 0.04, -0.39, -0.04), Vector3(0.21, 0.36, 0.22), skin if heavy else dark)
-		Geo.ellipsoid(arm, Vector3(side * 0.04, -0.6, -0.08), Vector3(0.19, 0.19, 0.19), dark)
-		if heavy:
-			for i in range(3):
-				Geo.link(arm, Vector3(side * (0.12 + i * 0.035), 0, 0.08), Vector3(side * (0.22 + i * 0.045), -0.3 - i * 0.04, 0.06), 0.045, skin)
-		else:
-			if side == 1:
-				Geo.box(arm, Vector3(0.04, -0.61, -0.21), Vector3(0.09, 0.12, 0.28), pale)
-		limbs.append(arm)
 
 func animate_model(delta: float) -> void:
 	if heavy:
@@ -101,13 +46,8 @@ func animate_model(delta: float) -> void:
 		hit_flash = maxf(0.0, hit_flash - delta)
 		eye.light_energy = 2.5 if hit_flash > 0 else (0.7 if state == "PREPARANDO" else 0.0)
 		return
-	gait += Vector2(velocity.x, velocity.z).length() * delta * 3.0
-	var stride := sin(gait) * (0.35 if state == "PERSIGUIENDO" else 0.0)
-	limbs[0].rotation.x = stride
-	limbs[2].rotation.x = -stride
-	var attack := sin((1.4 if heavy else 1.0) - cooldown) * -1.3 if state == "ATACANDO" else 0.0
-	limbs[1].rotation.x = -stride * 0.6 + attack
-	limbs[3].rotation.x = stride * 0.6 + attack
+	model.update_locomotion(delta,global_basis.inverse()*velocity,false,state=="ATACANDO",is_on_floor())
+	model.upper_body.rotation.x += sin(hit_flash*PI/.12)*.12
 	hit_flash = maxf(0.0, hit_flash - delta)
 	eye.light_energy = 2.5 if hit_flash > 0.0 else 0.0
 

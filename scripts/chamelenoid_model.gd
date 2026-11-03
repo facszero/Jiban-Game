@@ -25,20 +25,20 @@ func organic(color: Color, roughness: float, seed_value: int) -> StandardMateria
 	var normals := Image.create(128,128,false,Image.FORMAT_RGB8)
 	for y in range(128):
 		for x in range(128):
-			var n := .59 + surface_height(x,y,noise,seed_value)*.35
+			var n := .83 + surface_height(x,y,noise,seed_value)*.12
 			img.set_pixel(x,y,Color(n,n,n))
 			var dx := surface_height(x+1,y,noise,seed_value)-surface_height(x-1,y,noise,seed_value)
 			var dy := surface_height(x,y+1,noise,seed_value)-surface_height(x,y-1,noise,seed_value)
-			var normal := Vector3(-dx*3.0,-dy*3.0,1).normalized()
+			var normal := Vector3(-dx*1.1,-dy*1.1,1).normalized()
 			normals.set_pixel(x,y,Color(normal.x*.5+.5,normal.y*.5+.5,normal.z*.5+.5))
 	img.generate_mipmaps()
 	mat.albedo_texture = ImageTexture.create_from_image(img)
 	normals.generate_mipmaps()
 	mat.normal_enabled=true
 	mat.normal_texture=ImageTexture.create_from_image(normals)
-	mat.normal_scale=1.0
+	mat.normal_scale=.38
 	mat.uv1_triplanar = true
-	mat.uv1_scale = Vector3.ONE*2.8
+	mat.uv1_scale = Vector3.ONE*5.5
 	return mat
 
 func _ready() -> void:
@@ -137,7 +137,7 @@ func build_head() -> void:
 	for side in [-1,1]:
 		var socket := leaf(head,Vector3(side*.087,.193,-.113),.112,.185,skin)
 		socket.rotation.z=-side*.45
-		var eye_points := [Vector2(0,.060),Vector2(.023,.028),Vector2(.025,-.021),Vector2(0,-.058),Vector2(-.022,-.022),Vector2(-.023,.027)]
+		var eye_points := [Vector2(0,.060),Vector2(.034,.028),Vector2(.035,-.021),Vector2(0,-.058),Vector2(-.032,-.022),Vector2(-.033,.027)]
 		plate(head,Vector3(side*.087,.193,-.124),eye_points,.008,gold).rotation.z=-side*.45
 		plate(head,Vector3(side*.087,.186,-.136),[Vector2(0,.029),Vector2(.006,.013),Vector2(.007,-.02),Vector2(0,-.03),Vector2(-.007,-.019),Vector2(-.006,.012)],.003,dark).rotation.z=-side*.45
 		leaf(head,Vector3(side*.107,.079,-.103),.085,.17,skin).rotation.z=-side*.3
@@ -241,11 +241,8 @@ func build_crest() -> void:
 
 
 func surface_height(x: float, y: float, noise: FastNoiseLite, seed_value: int) -> float:
-	var grain := noise.get_noise_2d(x,y)*.15
+	var grain := noise.get_noise_2d(x,y)
+	var broad := noise.get_noise_2d(x*.31+53,y*.31-17)
 	if seed_value==17:
-		return .5+.30*sin(y*.38+sin(x*.09)*1.4)+grain
-	var row := floori(y/12.0)
-	var u := fposmod(x+float(row%2)*8.0,16.0)/16.0-.5
-	var v := fposmod(y,12.0)/12.0-.5
-	var scale_height := maxf(0.0,1.0-u*u*4.5-v*v*5.0)
-	return .20+.70*scale_height+grain
+		return .5+.12*sin(y*.24+broad*6.0)+grain*.24
+	return .5+grain*.32+broad*.18

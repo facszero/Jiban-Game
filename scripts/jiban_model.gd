@@ -29,6 +29,16 @@ static func metal(color: Color, metallic: float, roughness: float) -> StandardMa
 	mat.roughness=roughness
 	return mat
 func _ready() -> void:
+	# Fine finish reads as metal at close range without changing the armor silhouette.
+	var finish := Image.create(64,64,false,Image.FORMAT_RGB8)
+	for y in range(64):
+		for x in range(64):
+			var shade := .91+float((x*13+y*7)%11)*.006
+			finish.set_pixel(x,y,Color(shade,shade,shade))
+	finish.generate_mipmaps()
+	silver.albedo_texture=ImageTexture.create_from_image(finish)
+	silver.uv1_triplanar=true
+	silver.uv1_scale=Vector3.ONE*8
 	red.emission_enabled=true
 	red.emission=Color(.85,.005,.015)
 	red.emission_energy_multiplier=.8
@@ -136,6 +146,12 @@ func build_torso() -> void:
 	plate(upper_body,Vector3(-.115,1.49,-.184),[Vector2(-.031,.038),Vector2(.031,.038),Vector2(.027,-.018),Vector2(0,-.043),Vector2(-.027,-.018)],.006,gold)
 	Geo.box(upper_body,Vector3(-.115,1.49,-.194),Vector3(.006,.052,.004),navy)
 	Geo.box(upper_body,Vector3(-.115,1.50,-.194),Vector3(.042,.006,.004),navy)
+	# Recessed plate divisions and fasteners follow the concept's fitted armor.
+	for side in [-1,1]:
+		Geo.link(upper_body,Vector3(side*.18,1.56,-.16),Vector3(side*.20,1.43,-.168),.003,steel)
+		Geo.link(upper_body,Vector3(side*.20,1.43,-.168),Vector3(side*.145,1.36,-.16),.003,steel)
+		for y in [1.39,1.53]:
+			Geo.ellipsoid(upper_body,Vector3(side*.205,y,-.157),Vector3(.009,.009,.004),steel)
 	ribs(upper_body,1.60,4,.079,.075)
 func build_head() -> void:
 	var head := joint(upper_body,Vector3(0,1.69,0),"Helmet")
