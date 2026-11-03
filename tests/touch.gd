@@ -27,6 +27,33 @@ func run() -> void:
 	root.push_input(press, true)
 	await process_frame
 	verify(not Input.is_action_pressed("forward"), "Touch movement release")
+	press.position = Vector2(285,430) * root.get_visible_rect().size / Vector2(1280,720)
+	press.pressed = true
+	root.push_input(press,true)
+	await process_frame
+	press = press.duplicate()
+	press.pressed = false
+	root.push_input(press,true)
+	await process_frame
+	verify(Input.is_action_pressed("sprint"),"Sprint remains active after lifting finger")
+	press = press.duplicate()
+	press.pressed = true
+	root.push_input(press,true)
+	await process_frame
+	verify(not Input.is_action_pressed("sprint"),"Second tap disables sprint")
+	press = press.duplicate()
+	press.pressed = false
+	root.push_input(press,true)
+	touch.set_sprint(true)
+	paused=true
+	await process_frame
+	await process_frame
+	verify(not Input.is_action_pressed("sprint"),"Pause clears sprint")
+	paused=false
+	touch.set_sprint(true)
+	touch._notification(Node.NOTIFICATION_APPLICATION_FOCUS_OUT)
+	await process_frame
+	verify(not Input.is_action_pressed("sprint"),"Focus loss clears sprint")
 	var old_yaw: float = game.player.rotation.y
 	var look := InputEventScreenTouch.new()
 	look.index = 1

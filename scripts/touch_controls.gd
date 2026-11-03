@@ -6,6 +6,9 @@ var player: Node3D
 var look_finger := -1
 var zones: Array = []
 var held: Dictionary = {}
+var sprint_enabled := false
+var sprint_disc: Polygon2D
+var sprint_label: Label
 
 func _ready() -> void:
 	layer = 5
@@ -18,6 +21,7 @@ func _ready() -> void:
 	add_child(layout)
 	var buttons := [
 		["forward", "▲", Vector2(125, 460)], ["back", "▼", Vector2(125, 620)],
+		["sprint", "CORRER", Vector2(285, 430)],
 		["left", "◀", Vector2(45, 540)], ["right", "▶", Vector2(205, 540)],
 		["fire", "FUEGO", Vector2(1130, 535)], ["jump", "SALTO", Vector2(1220, 450)],
 		["interact", "USAR", Vector2(1010, 620)], ["reload", "CARGA", Vector2(1130, 650)],
@@ -50,6 +54,9 @@ func _ready() -> void:
 			label.add_theme_font_size_override("font_size", 16)
 			label.text = entry[1]
 			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			if entry[0] == "sprint":
+				sprint_disc = disc
+				sprint_label = label
 
 	var help := Label.new()
 	layout.add_child(help)
@@ -86,7 +93,7 @@ func _input(event: InputEvent) -> void:
 	if not event.pressed and held.has(event.index):
 		var action: String = held[event.index]
 		held.erase(event.index)
-		if not held.values().has(action):
+		if action != "sprint" and not held.values().has(action):
 			action_event(action, false)
 		get_viewport().set_input_as_handled()
 		return
@@ -96,13 +103,32 @@ func _input(event: InputEvent) -> void:
 			if point.distance_to(zone[2]) < 38:
 				if not get_tree().paused or zone[0] == "pause_game":
 					held[event.index] = zone[0]
-					action_event(zone[0], true)
+					if zone[0] == "sprint":
+						set_sprint(not sprint_enabled)
+					else:
+						action_event(zone[0], true)
 				get_viewport().set_input_as_handled()
 				return
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		set_sprint(false)
 		for action in held.values():
-			action_event(action, false)
+			if action != "sprint": action_event(action, false)
 		held.clear()
 		look_finger = -1
+
+func set_sprint(enabled: bool) -> void:
+	if sprint_enabled == enabled: return
+	sprint_enabled = enabled
+	action_event("sprint", enabled)
+	if is_instance_valid(sprint_disc):
+		sprint_disc.color = Color(.10,.55,.42,.9) if enabled else Color(.06,.22,.32,.75)
+		sprint_label.text = "CORRER ✓" if enabled else "CORRER"
+
+func _process(_delta: float) -> void:
+	if sprint_enabled and get_tree().paused:
+		set_sprint(false)
+
+func _exit_tree() -> void:
+	if sprint_enabled: action_event("sprint", false)
