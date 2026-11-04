@@ -14,6 +14,10 @@ var wrists: Array[Node3D] = []
 const GAIT_PER_METER := 4.5
 var torso: Node3D
 var head: Node3D
+var jaw: Node3D
+var mouth: Node3D
+var brows: Array[Node3D] = []
+var expression := 0.0
 var helper: Node3D
 var skin: StandardMaterial3D
 var flesh: StandardMaterial3D
@@ -186,8 +190,10 @@ func build_head() -> void:
 		plate(head,Vector3(side*.087,.190,-.161),[Vector2(0,.020),Vector2(.006,.009),Vector2(.006,-.015),Vector2(0,-.022),Vector2(-.006,-.015),Vector2(-.006,.009)],.003,dark)
 		leaf(head,Vector3(side*.107,.079,-.110),.10,.19,skin).rotation.z=-side*.3
 	for side in [-1,1]:
-		var brow := leaf(head,Vector3(side*.078,.231,-.157),.050,.17,skin)
-		brow.rotation.z=-side*1.02
+		var brow: Node3D = helper.joint(head,Vector3(side*.078,.231,-.157),"BrowL" if side<0 else "BrowR")
+		brows.append(brow)
+		leaf(brow,Vector3.ZERO,.050,.17,skin).rotation.z=-side*1.02
+		Geo.link(brow,Vector3(-side*.050,-.025,-.006),Vector3(side*.045,.027,-.006),.007,skin)
 	for side in [-1,1]:
 		for i in range(4):
 			var scale_plate:=leaf(head,Vector3(side*.10,.07+i*.065,.087),.09,.13,skin)
@@ -195,9 +201,29 @@ func build_head() -> void:
 			scale_plate.rotation.z=side*.4
 	# Brow ridge, tapered snout, mouth seam and pointed lower jaw.
 	plate(head,Vector3(0,.12,-.145),[Vector2(-.04,.13),Vector2(.04,.13),Vector2(.045,-.03),Vector2(0,-.07),Vector2(-.045,-.03)],.032,skin)
-	Geo.link(head,Vector3(-.065,.042,-.149),Vector3(0,.041,-.180),.006,dark)
-	Geo.link(head,Vector3(0,.041,-.180),Vector3(.065,.042,-.149),.006,dark)
-	leaf(head,Vector3(0,.005,-.135),.13,.115,edge)
+	# Separate mouth and mandible survive material batching and can articulate.
+	mouth=helper.joint(head,Vector3(0,.025,-.171),"Mouth")
+	mouth.add_child(Node3D.new())
+	var cavity:=StandardMaterial3D.new()
+	cavity.albedo_color=Color(.025,.005,.008)
+	cavity.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+	plate(mouth,Vector3.ZERO,[Vector2(-.065,.045),Vector2(.065,.045),Vector2(.070,-.025),Vector2(.035,-.065),Vector2(-.035,-.065),Vector2(-.070,-.025)],.003,cavity)
+	for side in [-1,1]:
+		var tooth:=MeshInstance3D.new()
+		var cone:=CylinderMesh.new()
+		cone.top_radius=.008
+		cone.bottom_radius=0
+		cone.height=.026
+		cone.radial_segments=8
+		tooth.mesh=cone
+		tooth.material_override=edge
+		mouth.add_child(tooth)
+		tooth.position=Vector3(side*.044,.037,-.019)
+	jaw=helper.joint(head,Vector3(0,.055,-.070),"Jaw")
+	leaf(jaw,Vector3(0,-.050,-.078),.14,.115,edge)
+	Geo.link(jaw,Vector3(-.065,-.013,-.079),Vector3(0,-.014,-.110),.007,dark)
+	Geo.link(jaw,Vector3(0,-.014,-.110),Vector3(.065,-.013,-.079),.007,dark)
+	mouth.visible=false
 	for side in [-1,1]:
 		for i in range(3):
 			leaf(head,Vector3(side*.13,.06+i*.075,.055),.045,.10,flesh).rotation.y=side*PI/2
@@ -321,6 +347,7 @@ func animate(phase: float, movement: float, attack_time: float = -1.0) -> void:
 		elbows[1].rotation.x=lerpf(.28,lerpf(.85,.18,release),pull*weight)
 		torso.rotation.y=lerpf(-.22,.28,release)*weight*pull
 		torso.rotation.x-=.10*release*weight
+	animate_face(attack_time)
 	# Rotate around the waist instead of tipping the whole chest around ground level.
 	var pivot := Vector3(0,.99,0)
 	torso.position=pivot-Quaternion.from_euler(torso.rotation)*pivot
@@ -351,3 +378,19 @@ func surface_height(x: float, y: float, noise: FastNoiseLite, seed_value: int) -
 	if seed_value==17:
 		return .50+noise.get_noise_2d(x*.65+broad*9,y*2.2)*.24+grain*.16
 	return .50+grain*.28+broad*.20
+
+
+func animate_face(attack_time: float) -> void:
+	# Anticipation, open-mouth exertion at impact, then a gradual return to rest.
+	expression=0.0
+	if attack_time>=0:
+		expression=smoothstep(.18,.65,attack_time)*(1.0-smoothstep(.86,1.40,attack_time))
+	jaw.rotation.x=-.62*expression
+	jaw.position.z=-.070-.065*expression
+	mouth.visible=expression>.035
+	mouth.scale.y=maxf(.08,expression)
+	for i in range(brows.size()):
+		var side: float=-1.0 if i==0 else 1.0
+		brows[i].position.y=.231-.012*expression
+		brows[i].rotation.z=side*.12*expression
+	head.rotation.x-=.14*expression

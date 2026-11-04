@@ -79,6 +79,13 @@ func run() -> void:
 			check(ankle.global_position.y>.05 and ankle.global_position.y<.23,"Walking foot stays above floor")
 	creature.animate(0,0,.78)
 	check(creature.elbows[1].global_position.z<creature.arms[1].global_position.z,"Strike reaches forward")
+	creature.animate(0,0,-1)
+	check(not creature.mouth.visible and is_zero_approx(creature.jaw.rotation.x),"Resting face has closed mouth")
+	creature.animate(0,0,.78)
+	check(creature.expression>.95 and creature.jaw.rotation.x<-.5 and creature.mouth.visible,"Attack impact opens mandible")
+	check(creature.brows[0].position.y<.225,"Brow tightens during attack")
+	creature.animate(0,0,1.45)
+	check(not creature.mouth.visible and is_zero_approx(creature.jaw.rotation.x),"Recovery restores face")
 	studio.model.animate(0,0,.5)
 	check(studio.model.arms[1].rotation.x>.4,"Windup visibly raises the striking arm")
 	studio.select_model(0)
@@ -99,3 +106,4 @@ func measure(node: Node) -> void:
 			triangle_count+=(indices.size() if indices!=null and indices.size()>0 else arrays[Mesh.ARRAY_VERTEX].size())/3
 	for child in node.get_children():
 		measure(child)
+
