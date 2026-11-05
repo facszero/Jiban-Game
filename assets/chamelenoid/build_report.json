@@ -6,7 +6,9 @@
     "Idle",
     "Walk",
     "AttackRight",
-    "AttackLeft"
+    "AttackLeft",
+    "Stagger",
+    "Death"
   ],
   "materials": "Vertex colors; procedural microdetail approximated, not texture-baked"
 }

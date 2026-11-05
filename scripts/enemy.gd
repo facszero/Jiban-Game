@@ -17,6 +17,15 @@ var attack_elapsed := -1.0
 var attack_hit := false
 var attack_right := true
 var next_attack_right := true
+var hit_elapsed := -1.0
+var stagger_elapsed := -1.0
+var stagger_cooldown := 0.0
+var damage_window := 0.0
+var stagger_damage := 0.0
+var recoil_direction := Vector3.ZERO
+var death_elapsed := -1.0
+const STAGGER_DURATION := .70
+const CORPSE_DURATION := 4.0
 const LUNGE_START := .58
 const LUNGE_END := .90
 const LUNGE_SPEED := 2.8
@@ -47,7 +56,7 @@ func _ready() -> void:
 func animate_model(delta: float) -> void:
 	if heavy:
 		gait += Vector2(velocity.x, velocity.z).length() * delta * preload("res://scripts/chamelenoid_model.gd").GAIT_PER_METER
-		model.animate(gait, 1.0 if state == "PERSIGUIENDO" else 0.0, attack_elapsed, attack_right)
+		model.animate(gait, 1.0 if state == "PERSIGUIENDO" else 0.0, attack_elapsed, attack_right, hit_elapsed, stagger_elapsed, death_elapsed)
 		hit_flash = maxf(0.0, hit_flash - delta)
 		eye.light_energy = 2.5 if hit_flash > 0 else (0.7 if state == "PREPARANDO" else 0.0)
 		return
@@ -57,6 +66,9 @@ func animate_model(delta: float) -> void:
 	eye.light_energy = 2.5 if hit_flash > 0.0 else 0.0
 
 func _physics_process(delta: float) -> void:
+	if heavy and death_elapsed >= 0:
+		update_death(delta)
+		return
 	if not is_instance_valid(player) or player.health <= 0.0 or health <= 0.0:
 		return
 	if heavy:
@@ -86,17 +98,67 @@ func _physics_process(delta: float) -> void:
 		cooldown = 1.4 if heavy else 1.0
 
 func take_damage(amount: float) -> void:
-	if health <= 0.0:
+	if health <= 0.0 or amount <= 0.0:
 		return
-	health -= amount
-	hit_flash = 0.12
+	health = maxf(0.0,health-amount)
+	hit_flash = .12
 	if health <= 0.0:
 		state = "MUERTO"
 		remove_from_group("enemies")
+		attack_elapsed = -1
+		attack_hit = true
 		defeated.emit()
-		queue_free()
+		if heavy:
+			death_elapsed=0
+			stagger_elapsed=-1
+			hit_elapsed=-1
+			velocity=Vector3.ZERO
+			collision_layer=0
+			collision_mask=1
+			add_to_group("enemy_corpses")
+			animate_model(0)
+		else:
+			queue_free()
+		return
+	if heavy:
+		hit_elapsed=0
+		stagger_damage=(stagger_damage if damage_window>0 else 0.0)+amount
+		damage_window=.8
+		if stagger_cooldown<=0 and (amount>=45 or stagger_damage>=50):
+			stagger_elapsed=0
+			stagger_cooldown=1.8
+			stagger_damage=0
+			attack_elapsed=-1
+			attack_hit=true
+			cooldown=maxf(cooldown,STAGGER_DURATION+.2)
+			state="ATURDIDO"
+			recoil_direction=global_basis.z
+			if is_instance_valid(player):
+				var away := global_position-player.global_position
+				away.y=0
+				if away.length()>.01: recoil_direction=away.normalized()
 
+func update_death(delta: float) -> void:
+	death_elapsed+=delta
+	velocity.x=0
+	velocity.z=0
+	if not is_on_floor(): velocity.y-=20.0*delta
+	move_and_slide()
+	animate_model(delta)
+	if death_elapsed>=CORPSE_DURATION: queue_free()
 
+func update_stagger(delta: float) -> void:
+	stagger_elapsed+=delta
+	var push := 1.7*(1.0-smoothstep(0,.32,stagger_elapsed))
+	velocity.x=recoil_direction.x*push
+	velocity.z=recoil_direction.z*push
+	if not is_on_floor(): velocity.y-=20.0*delta
+	move_and_slide()
+	state="ATURDIDO"
+	animate_model(delta)
+	if stagger_elapsed>=STAGGER_DURATION:
+		stagger_elapsed=-1
+		state="RECUPERANDO"
 
 func sees_player() -> bool:
 	var query := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 1.3, player.global_position + Vector3.UP * 1.3, 3, [get_rid()])
@@ -104,6 +166,19 @@ func sees_player() -> bool:
 	return not hit.is_empty() and hit.collider == player
 
 func update_heavy(delta: float) -> void:
+	if death_elapsed >= 0:
+		update_death(delta)
+		return
+	stagger_cooldown=maxf(0,stagger_cooldown-delta)
+	damage_window=maxf(0,damage_window-delta)
+	if damage_window<=0: stagger_damage=0
+	if hit_elapsed>=0:
+		hit_elapsed+=delta
+		if hit_elapsed>=.22: hit_elapsed=-1
+	if stagger_elapsed>=0:
+		cooldown=maxf(0,cooldown-delta)
+		update_stagger(delta)
+		return
 	var pending_impact := false
 	cooldown = maxf(0.0, cooldown-delta)
 	var offset := player.global_position-global_position

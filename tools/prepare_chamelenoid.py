@@ -1,6 +1,6 @@
 """Rebuild the game asset from the preserved sculpt; run with Blender 4.3.2."""
 import bpy, math, os, json, sys, argparse
-from mathutils import Vector
+from mathutils import Vector, Quaternion
 from mathutils.noise import noise_vector
 parser=argparse.ArgumentParser()
 parser.add_argument('--source',required=True,help='Path to the preserved static Blender sculpt')
@@ -102,6 +102,9 @@ def weights(p,name):
             w={k:v*arm for k,v in w.items()};w['chest']=1-arm
             return w
         return blend('hand.'+side,'forearm.'+side,smooth(1.12,1.25,z))
+    if z<1.19 and z>.88 and ax<.10:
+        pelvis=smooth(1.02,1.20,z);right=smooth(-.10,.10,x)
+        return {'pelvis':pelvis,'thigh.L':(1-pelvis)*(1-right),'thigh.R':(1-pelvis)*right}
     if z<1.19:
         if z<.27:return blend('foot.'+side,'shin.'+side,smooth(.13,.25,z))
         if z<.88:return blend('shin.'+side,'thigh.'+side,smooth(.62,.83,z))
@@ -141,19 +144,55 @@ def arm_target(side,target):
     rig.pose.bones[upper.name].rotation_quaternion=qu.inverted() @ du @ qu
     rig.pose.bones[fore.name].rotation_quaternion=qf.inverted() @ du.inverted() @ df @ qf
 
+def leg_target(side,target,shift):
+    upper=rigdata.bones['thigh.'+side];lower=rigdata.bones['shin.'+side];foot=rigdata.bones['foot.'+side]
+    hip=upper.head_local+shift;v=Vector(target)-hip
+    length=min(v.length,(upper.length+lower.length)*.995);direction=v.normalized()
+    a=(upper.length**2-lower.length**2+length**2)/(2*length)
+    pole=Vector((0,-1,0));pole=(pole-direction*pole.dot(direction)).normalized()
+    knee=hip+direction*a+pole*math.sqrt(max(0,upper.length**2-a*a))
+    ankle=hip+direction*length
+    du=(upper.tail_local-upper.head_local).rotation_difference(knee-hip)
+    dl=(lower.tail_local-lower.head_local).rotation_difference(ankle-knee)
+    qu=upper.matrix_local.to_quaternion();ql=lower.matrix_local.to_quaternion();qf=foot.matrix_local.to_quaternion()
+    rig.pose.bones[upper.name].rotation_quaternion=qu.inverted() @ du @ qu
+    rig.pose.bones[lower.name].rotation_quaternion=ql.inverted() @ du.inverted() @ dl @ ql
+    rig.pose.bones[foot.name].rotation_quaternion=qf.inverted() @ dl.inverted() @ qf
+
 def pose(t,mode):
     for p in rig.pose.bones:p.rotation_mode='XYZ';p.rotation_euler=(0,0,0);p.location=(0,0,0)
     attack=mode.startswith('Attack')
     if mode=='Walk':
         phase=t*math.tau
+        compression=.075+.018*(.5+.5*math.cos(2*phase))
+        shift=Vector((.025*math.cos(phase),0,-compression))
+        rig.pose.bones['pelvis'].location=rigdata.bones['pelvis'].matrix_local.to_quaternion().inverted() @ shift
+        rig.pose.bones['chest'].rotation_euler.x=.09
+        rig.pose.bones['chest'].rotation_euler.y=.055*math.sin(phase)
+        rig.pose.bones['chest'].rotation_euler.z=.035*math.cos(phase)
+        rig.pose.bones['head'].rotation_euler.x=-.07
         for side,offset in [('L',0),('R',math.pi)]:
-            a=math.sin(phase+offset)
-            rig.pose.bones['thigh.'+side].rotation_euler.x=.25*a
-            rig.pose.bones['shin.'+side].rotation_euler.x=-.30*max(0,a)
-            rig.pose.bones['foot.'+side].rotation_euler.x=-.25*a+.30*max(0,a)
-            rig.pose.bones['upper_arm.'+side].rotation_euler.x=-.13*a
-            rig.pose.bones['forearm.'+side].rotation_euler.x=.10
-        rig.pose.bones['chest'].rotation_euler.y=.035*math.sin(phase)
+            a=math.sin(phase+offset-.25)
+            rig.pose.bones['upper_arm.'+side].rotation_euler.x=-.12*a
+            rig.pose.bones['forearm.'+side].rotation_euler.x=-.12
+    elif mode=='Stagger':
+        pulse=math.sin(math.pi*smooth(0,.70,t))
+        rig.pose.bones['chest'].rotation_euler.x=-.24*pulse
+        rig.pose.bones['head'].rotation_euler.x=.15*pulse
+        rig.pose.bones['jaw'].rotation_euler.x=-.25*pulse
+        for side in ['L','R']:
+            rig.pose.bones['upper_arm.'+side].rotation_euler.x=-.30*pulse
+            rig.pose.bones['forearm.'+side].rotation_euler.x=-.40*pulse
+    elif mode=='Death':
+        collapse=smooth(0,.55,t);fall=smooth(.45,1.55,t)
+        rig.pose.bones['chest'].rotation_euler.x=.32*collapse*(1-.5*fall)
+        rig.pose.bones['head'].rotation_euler.x=.22*collapse
+        rig.pose.bones['jaw'].rotation_euler.x=-.32*collapse
+        for side in ['L','R']:
+            rig.pose.bones['thigh.'+side].rotation_euler.x=.35*collapse
+            rig.pose.bones['shin.'+side].rotation_euler.x=-.70*collapse
+            rig.pose.bones['upper_arm.'+side].rotation_euler.x=-.24*collapse
+            rig.pose.bones['forearm.'+side].rotation_euler.x=-.40*collapse
     elif attack:
         sign=1 if mode=='AttackRight' else -1
         pull=smooth(0,.60,t);sweep=smooth(.60,.96,t);recover=smooth(.98,1.45,t)
@@ -171,6 +210,22 @@ def pose(t,mode):
     else:rig.pose.bones['chest'].rotation_euler.x=.008*math.sin(t*math.tau/2)
     for p in rig.pose.bones:
         q=p.rotation_euler.to_quaternion();p.rotation_mode='QUATERNION';p.rotation_quaternion=q
+    if mode=='Walk':
+        for side,offset in [('L',0),('R',.5)]:
+            step=(t+offset)%1
+            # Long planted support; short low-clearance swing.
+            if step<.65: y=-.39+.78*step/.65;lift=0
+            else:
+                u=(step-.65)/.35;y=.39-.78*smooth(0,1,u);lift=.075*math.sin(math.pi*u)
+            leg_target(side,Vector((-.30 if side=='L' else .30,.015+y,.17+lift)),shift)
+    elif mode=='Death':
+        q=rigdata.bones['pelvis'].matrix_local.to_quaternion()
+        rig.pose.bones['pelvis'].rotation_quaternion=q.inverted() @ Quaternion((0,1,0),1.52*fall) @ q
+        rig.pose.bones['pelvis'].location=q.inverted() @ Vector((.22*fall,0,-.20*collapse-.72*fall))
+        bpy.context.view_layer.update()
+        obj=mesh.evaluated_get(bpy.context.evaluated_depsgraph_get());evaluated=obj.to_mesh()
+        floor=min(v.co.z for v in evaluated.vertices);obj.to_mesh_clear()
+        if floor<.004:rig.pose.bones['pelvis'].location+=q.inverted() @ Vector((0,0,.004-floor))
     if attack:
         side='R' if sign==1 else 'L'
         rest=rigdata.bones['forearm.'+side].tail_local.copy()
@@ -184,7 +239,7 @@ def pose(t,mode):
         if pull*(1-recover)>.00001:arm_target(side,target)
 
 rig.animation_data_create()
-for mode,duration in [('Idle',2),('Walk',1),('AttackRight',1.5),('AttackLeft',1.5)]:
+for mode,duration in [('Idle',2),('Walk',1),('AttackRight',1.5),('AttackLeft',1.5),('Stagger',.7),('Death',1.8)]:
     action=bpy.data.actions.new(mode);rig.animation_data.action=action
     for f in range(round(duration*fps)+1):
         pose(f/fps,mode)
@@ -201,9 +256,11 @@ bpy.ops.wm.save_as_mainfile(filepath=os.path.join(BASE,'Chamelenoid_reconstruido
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'chamelenoid.glb'),export_format='GLB',use_selection=True,export_animations=True,export_animation_mode='ACTIONS',export_frame_range=False,export_force_sampling=True,export_materials='EXPORT',export_yup=True)
 mesh.data.calc_loop_triangles()
-report={'triangles':len(mesh.data.loop_triangles),'vertices':len(mesh.data.vertices),'bones':len(rigdata.bones),'animations':['Idle','Walk','AttackRight','AttackLeft'],'materials':'Vertex colors; procedural microdetail approximated, not texture-baked'}
+report={'triangles':len(mesh.data.loop_triangles),'vertices':len(mesh.data.vertices),'bones':len(rigdata.bones),'animations':['Idle','Walk','AttackRight','AttackLeft','Stagger','Death'],'materials':'Vertex colors; procedural microdetail approximated, not texture-baked'}
 with open(os.path.join(OUT,'build_report.json'),'w') as f:json.dump(report,f,indent=2)
 print('REBUILD_COMPLETE',report,flush=True)
+
+
 
 
 

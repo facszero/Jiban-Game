@@ -95,7 +95,7 @@ func create_hud() -> void:
 	hud = text_label(frame, Vector2(30, 20), 24)
 	hud.text = "JIBAN // SISTEMAS OPERATIVOS"
 	var version_label := text_label(frame, Vector2(355, 77), 14)
-	version_label.text = "v0.7.1-prueba"
+	version_label.text = "v0.7.2-prueba"
 	for i in range(2):
 		var bar := ProgressBar.new()
 		frame.add_child(bar)
@@ -249,6 +249,8 @@ func restart_checkpoint() -> void:
 	if not checkpoint:
 		get_tree().reload_current_scene()
 		return
+	for corpse in get_tree().get_nodes_in_group("enemy_corpses"):
+		corpse.free()
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		enemy.free()
 	player.position = Vector3(0, 0.1, -22)

@@ -22,6 +22,10 @@ var mask_selected := false
 var comparison_selected := false
 var preview_attack := -1.0
 var preview_right := false
+var preview_hit := -1.0
+var preview_stagger := -1.0
+var preview_death := -1.0
+var reaction_selector: OptionButton
 var attack_button: Button
 var selector: OptionButton
 func _ready() -> void:
@@ -117,7 +121,24 @@ func _ready() -> void:
 	attack_button.pressed.connect(func():
 		if preview_attack < 0:
 			preview_right=not preview_right
-			preview_attack=0.0)
+			preview_attack=0.0
+			preview_hit=-1
+			preview_stagger=-1
+			preview_death=-1)
+	reaction_selector=OptionButton.new()
+	frame.add_child(reaction_selector)
+	reaction_selector.position=Vector2(1030,155)
+	reaction_selector.size=Vector2(220,48)
+	for label in ["PROBAR REACCIÓN", "IMPACTO LEVE", "RETROCESO", "CAÍDA", "VOLVER DE PIE"]:
+		reaction_selector.add_item(label)
+	reaction_selector.visible=false
+	reaction_selector.item_selected.connect(func(index):
+		preview_hit=0.0 if index==1 else -1.0
+		preview_stagger=0.0 if index==2 else -1.0
+		preview_death=0.0 if index==3 else -1.0
+		if index>=2: preview_attack=-1.0
+		reaction_selector.select(0)
+		update_camera())
 	gait_selector = OptionButton.new()
 	frame.add_child(gait_selector)
 	gait_selector.position=Vector2(1030,95)
@@ -132,7 +153,7 @@ func _ready() -> void:
 	help.text="Arrastrá para girar · + / − para acercar · la partida permanece en pausa"
 	help.mouse_filter=Control.MOUSE_FILTER_IGNORE
 func update_camera() -> void:
-	var target := Vector3(0,1.25 if comparison_selected else (1.20 if creature_selected else 1.05),0)
+	var target := Vector3(0,1.25 if comparison_selected else ((.65 if preview_death>=0 else 1.20) if creature_selected else 1.05),0)
 	camera.position=target+Vector3(sin(yaw)*cos(pitch),sin(pitch),-cos(yaw)*cos(pitch))*distance
 	camera.look_at(target)
 func zoom(amount: float) -> void:
@@ -169,11 +190,18 @@ func _process(delta: float) -> void:
 	if comparison_selected:
 		model.animate_all(phase,walking)
 	elif creature_selected:
+		if preview_hit>=0:
+			preview_hit+=delta
+			if preview_hit>.22: preview_hit=-1
+		if preview_stagger>=0:
+			preview_stagger+=delta
+			if preview_stagger>.70: preview_stagger=-1
+		if preview_death>=0: preview_death=minf(1.8,preview_death+delta)
 		if preview_attack >= 0:
 			preview_attack+=delta
 			if preview_attack>1.45:
 				preview_attack=-1
-		model.animate(phase,1.0 if walking and preview_attack<0 else 0.0,preview_attack,preview_right)
+		model.animate(phase,1.0 if walking and preview_attack<0 else 0.0,preview_attack,preview_right,preview_hit,preview_stagger,preview_death)
 	else:
 		preview_walk_blend=lerpf(preview_walk_blend,1.0 if walking else 0.0,1.0-exp(-delta*10.0))
 		model.update_locomotion(delta,Vector3(0,0,-(4.6 if preview_run else 2.0)*preview_walk_blend),preview_run,preview_aim,true)
@@ -206,6 +234,10 @@ func select_model(index: int) -> void:
 		model=preload("res://scripts/character_comparison.gd").new()
 	viewport.add_child(model)
 	preview_attack=-1
+	preview_hit=-1
+	preview_stagger=-1
+	preview_death=-1
+	reaction_selector.visible=creature_selected
 	distance=8.8 if comparison_selected else (4.35 if creature_selected else 3.65)
 	pitch=.08
 	yaw=-.35

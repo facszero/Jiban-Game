@@ -43,6 +43,9 @@ jobs:
           timeout 30 "$GODOT" --headless --script res://tests/heavy_swipes.gd 2>&1 | tee /tmp/swipes.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/swipes.log
           grep -q 'HEAVY SWIPES RESULT: 0 failures' /tmp/swipes.log
+          timeout 30 "$GODOT" --headless --script res://tests/heavy_reactions.gd 2>&1 | tee /tmp/reactions.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/reactions.log
+          grep -q 'HEAVY REACTIONS RESULT: 0 failures' /tmp/reactions.log
           timeout 30 "$GODOT" --headless --script res://tests/locomotion.gd 2>&1 | tee /tmp/locomotion.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/locomotion.log
           grep -q 'LOCOMOTION RESULT: 0 failures' /tmp/locomotion.log
