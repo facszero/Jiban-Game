@@ -20,8 +20,8 @@ func run() -> void:
 	game.add_child(heavy)
 	heavy.set_physics_process(false)
 	check(heavy!=null and cast[2].scale.is_equal_approx(heavy.model.scale),"Comparison uses gameplay scale")
-	check(cast[2].torso.scale.x>1.2,"Chamelenoid broader torso")
-	check(absf(cast[2].head.global_basis.x.length()-1.1)<.01,"Head retains proportions")
+	check(cast[2].skeleton != null,"Comparison loads reconstructed skeleton")
+	check(cast[2].visual.scale.is_equal_approx(Vector3.ONE*.86),"Sculpt retains uniform proportions")
 	for i in range(3): check(is_zero_approx(cast[i].position.y),"Common floor")
 	studio.walking=true
 	for i in range(10): await process_frame

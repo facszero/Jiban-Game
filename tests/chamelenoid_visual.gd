@@ -22,6 +22,14 @@ func run() -> void:
 	game.model_review.set_process(false)
 	game.model_review.model.animate(0,0,.6)
 	await snap("res://exports/cham_attack.png")
+	game.model_review.model.animate(0,0,.78)
+	await snap("res://exports/cham_impact.png")
+	game.model_review.model.animate(PI/2,1)
+	game.model_review.yaw=PI/2
+	game.model_review.update_camera()
+	await snap("res://exports/cham_walk_profile.png")
+	game.model_review.model.animate(0,0,-1)
+	await snap("res://exports/cham_rest_profile.png")
 	game.model_review.close()
 	game.set_pause(false)
 	for enemy in get_nodes_in_group("enemies"):

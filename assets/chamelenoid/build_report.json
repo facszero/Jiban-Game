@@ -1,0 +1,11 @@
+{
+  "triangles": 27019,
+  "vertices": 14617,
+  "bones": 16,
+  "animations": [
+    "Idle",
+    "Walk",
+    "Attack"
+  ],
+  "materials": "Vertex colors; procedural microdetail approximated, not texture-baked"
+}
