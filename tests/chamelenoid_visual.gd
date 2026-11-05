@@ -24,6 +24,12 @@ func run() -> void:
 	await snap("res://exports/cham_attack.png")
 	game.model_review.model.animate(0,0,.78)
 	await snap("res://exports/cham_impact.png")
+	game.model_review.model.animate(0,0,.98,true)
+	await snap("res://exports/cham_followthrough.png")
+	game.model_review.model.animate(0,0,.6,false)
+	await snap("res://exports/cham_left_windup.png")
+	game.model_review.model.animate(0,0,.78,false)
+	await snap("res://exports/cham_left_impact.png")
 	game.model_review.model.animate(PI/2,1)
 	game.model_review.yaw=PI/2
 	game.model_review.update_camera()

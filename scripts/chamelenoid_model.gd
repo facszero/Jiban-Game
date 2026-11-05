@@ -16,20 +16,20 @@ func _ready() -> void:
 	assert(skeleton != null and player != null)
 	player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
 	for key in player.get_animation_list():
-		for expected in ["Idle", "Walk", "Attack"]:
+		for expected in ["Idle", "Walk", "AttackRight", "AttackLeft"]:
 			if String(key).ends_with(expected): clips[expected] = key
-	assert(clips.size() == 3)
+	assert(clips.size() == 4)
 	animate(0, 0)
 func find_rig(node: Node) -> void:
 	if node is Skeleton3D: skeleton = node
 	if node is AnimationPlayer: player = node
 	for child in node.get_children(): find_rig(child)
-func animate(phase: float, movement: float, attack_time: float = -1.0) -> void:
+func animate(phase: float, movement: float, attack_time: float = -1.0, attack_right: bool = true) -> void:
 	if player == null: return
-	var clip: String = "Attack" if attack_time >= 0.0 else ("Walk" if movement > .01 else "Idle")
+	var clip: String = ("AttackRight" if attack_right else "AttackLeft") if attack_time >= 0.0 else ("Walk" if movement > .01 else "Idle")
 	var key: String = clips[clip]
 	var duration := player.get_animation(key).length
-	var time := clampf(attack_time, 0, duration) if clip == "Attack" else fposmod(phase / TAU, 1.0) * duration
+	var time := clampf(attack_time, 0, duration) if clip.begins_with("Attack") else fposmod(phase / TAU, 1.0) * duration
 	player.play(key)
 	player.seek(time, true)
 	skeleton.force_update_all_bone_transforms()

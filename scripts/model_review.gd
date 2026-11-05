@@ -21,6 +21,7 @@ var creature_selected := false
 var mask_selected := false
 var comparison_selected := false
 var preview_attack := -1.0
+var preview_right := false
 var attack_button: Button
 var selector: OptionButton
 func _ready() -> void:
@@ -113,7 +114,10 @@ func _ready() -> void:
 	attack_button.text="ATAQUE"
 	attack_button.custom_minimum_size=Vector2(120,52)
 	attack_button.visible=false
-	attack_button.pressed.connect(func(): preview_attack=0.0)
+	attack_button.pressed.connect(func():
+		if preview_attack < 0:
+			preview_right=not preview_right
+			preview_attack=0.0)
 	gait_selector = OptionButton.new()
 	frame.add_child(gait_selector)
 	gait_selector.position=Vector2(1030,95)
@@ -169,7 +173,7 @@ func _process(delta: float) -> void:
 			preview_attack+=delta
 			if preview_attack>1.45:
 				preview_attack=-1
-		model.animate(phase,1.0 if walking and preview_attack<0 else 0.0,preview_attack)
+		model.animate(phase,1.0 if walking and preview_attack<0 else 0.0,preview_attack,preview_right)
 	else:
 		preview_walk_blend=lerpf(preview_walk_blend,1.0 if walking else 0.0,1.0-exp(-delta*10.0))
 		model.update_locomotion(delta,Vector3(0,0,-(4.6 if preview_run else 2.0)*preview_walk_blend),preview_run,preview_aim,true)

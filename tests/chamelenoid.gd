@@ -68,7 +68,7 @@ func run() -> void:
 	check(mesh_count<=70 and triangle_count<=35000,"Creature geometry stays in budget")
 	var creature=studio.model
 	check(creature.skeleton.get_bone_count()==16,"Imported skeleton has all joints")
-	check(creature.clips.size()==3,"Idle, walk and attack imported")
+	check(creature.clips.size()==4,"Idle, walk and both swipes imported")
 	creature.animate(0,0)
 	var rest_hand: Vector3=creature.joint_position("hand.R")
 	var rest_hip: Vector3=creature.joint_position("thigh.R")
@@ -110,4 +110,5 @@ func measure(node: Node) -> void:
 			triangle_count+=(indices.size() if indices!=null and indices.size()>0 else arrays[Mesh.ARRAY_VERTEX].size())/3
 	for child in node.get_children():
 		measure(child)
+
 

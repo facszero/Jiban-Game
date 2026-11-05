@@ -126,8 +126,24 @@ mesh=bpy.context.object;mesh.name='ChamelenoidMesh'
 
 # Key every channel on every frame so cancelling attack restores the jaw and limbs.
 fps=30;bpy.context.scene.render.fps=fps
+def arm_target(side,target):
+    upper=rigdata.bones['upper_arm.'+side];fore=rigdata.bones['forearm.'+side]
+    shoulder=upper.head_local;v=Vector(target)-shoulder
+    length=min(v.length,(upper.length+fore.length)*.97);direction=v.normalized()
+    a=(upper.length**2-fore.length**2+length**2)/(2*length)
+    pole=Vector((.6 if side=='R' else -.6,.10,-1.0))
+    pole=(pole-direction*pole.dot(direction)).normalized()
+    elbow=shoulder+direction*a+pole*math.sqrt(max(0,upper.length**2-a*a))
+    wrist=shoulder+direction*length
+    du=(upper.tail_local-upper.head_local).rotation_difference(elbow-shoulder)
+    df=(fore.tail_local-fore.head_local).rotation_difference(wrist-elbow)
+    qu=upper.matrix_local.to_quaternion();qf=fore.matrix_local.to_quaternion()
+    rig.pose.bones[upper.name].rotation_quaternion=qu.inverted() @ du @ qu
+    rig.pose.bones[fore.name].rotation_quaternion=qf.inverted() @ du.inverted() @ df @ qf
+
 def pose(t,mode):
     for p in rig.pose.bones:p.rotation_mode='XYZ';p.rotation_euler=(0,0,0);p.location=(0,0,0)
+    attack=mode.startswith('Attack')
     if mode=='Walk':
         phase=t*math.tau
         for side,offset in [('L',0),('R',math.pi)]:
@@ -138,23 +154,42 @@ def pose(t,mode):
             rig.pose.bones['upper_arm.'+side].rotation_euler.x=-.13*a
             rig.pose.bones['forearm.'+side].rotation_euler.x=.10
         rig.pose.bones['chest'].rotation_euler.y=.035*math.sin(phase)
-    elif mode=='Attack':
-        pull=smooth(0,.65,t);release=smooth(.65,.80,t);recover=1-smooth(.83,1.45,t)
-        w=pull*recover
-        rig.pose.bones['upper_arm.R'].rotation_euler.x=-(.65+.85*release)*w
-        rig.pose.bones['upper_arm.R'].rotation_euler.z=(.45-.60*release)*w
-        rig.pose.bones['forearm.R'].rotation_euler.x=-(.65-.45*release)*w
-        rig.pose.bones['chest'].rotation_euler.y=(-.16+.32*release)*w
-        rig.pose.bones['jaw'].rotation_euler.x=-.55*smooth(.35,.75,t)*recover
+    elif attack:
+        sign=1 if mode=='AttackRight' else -1
+        pull=smooth(0,.60,t);sweep=smooth(.60,.96,t);recover=smooth(.98,1.45,t)
+        rig.pose.bones['chest'].rotation_euler.y=sign*(.40-.85*sweep)*pull*(1-recover)
+        rig.pose.bones['chest'].rotation_euler.x=.19*smooth(.52,.78,t)*(1-recover)
+        rig.pose.bones['head'].rotation_euler.x=-.09*pull*(1-recover)
+        rig.pose.bones['hand.'+('R' if sign==1 else 'L')].rotation_euler.y=-sign*.85*pull*(1-recover)
+        drive=math.sin(math.pi*smooth(.48,1.20,t))
+        rig.pose.bones['thigh.'+('R' if sign==1 else 'L')].rotation_euler.x=.16*drive
+        rig.pose.bones['shin.'+('R' if sign==1 else 'L')].rotation_euler.x=-.20*drive
+        rig.pose.bones['jaw'].rotation_euler.x=-.62*smooth(.25,.65,t)*(1-recover)
+        other='L' if sign==1 else 'R'
+        rig.pose.bones['upper_arm.'+other].rotation_euler.z=-sign*.30*pull*(1-recover)
+        rig.pose.bones['upper_arm.'+other].rotation_euler.x=-.20*pull*(1-recover)
     else:rig.pose.bones['chest'].rotation_euler.x=.008*math.sin(t*math.tau/2)
+    for p in rig.pose.bones:
+        q=p.rotation_euler.to_quaternion();p.rotation_mode='QUATERNION';p.rotation_quaternion=q
+    if attack:
+        side='R' if sign==1 else 'L'
+        rest=rigdata.bones['forearm.'+side].tail_local.copy()
+        wide=Vector((sign*1.04,-.08,1.96))
+        front=Vector((sign*.22,-.72,1.64))
+        across=Vector((-sign*.34,-.40,1.32))
+        target=rest.lerp(wide,pull)
+        if t>=.60:target=wide.lerp(front,smooth(.60,.78,t))
+        if t>=.78:target=front.lerp(across,smooth(.78,.98,t))
+        target=target.lerp(rest,recover)
+        if pull*(1-recover)>.00001:arm_target(side,target)
 
 rig.animation_data_create()
-for mode,duration in [('Idle',2),('Walk',1),('Attack',1.5)]:
+for mode,duration in [('Idle',2),('Walk',1),('AttackRight',1.5),('AttackLeft',1.5)]:
     action=bpy.data.actions.new(mode);rig.animation_data.action=action
     for f in range(round(duration*fps)+1):
         pose(f/fps,mode)
         for p in rig.pose.bones:
-            p.keyframe_insert(data_path='rotation_euler',frame=f)
+            p.keyframe_insert(data_path='rotation_quaternion',frame=f)
             p.keyframe_insert(data_path='location',frame=f)
     for fc in action.fcurves:
         for k in fc.keyframe_points:k.interpolation='LINEAR'
@@ -166,9 +201,13 @@ bpy.ops.wm.save_as_mainfile(filepath=os.path.join(BASE,'Chamelenoid_reconstruido
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'chamelenoid.glb'),export_format='GLB',use_selection=True,export_animations=True,export_animation_mode='ACTIONS',export_frame_range=False,export_force_sampling=True,export_materials='EXPORT',export_yup=True)
 mesh.data.calc_loop_triangles()
-report={'triangles':len(mesh.data.loop_triangles),'vertices':len(mesh.data.vertices),'bones':len(rigdata.bones),'animations':['Idle','Walk','Attack'],'materials':'Vertex colors; procedural microdetail approximated, not texture-baked'}
+report={'triangles':len(mesh.data.loop_triangles),'vertices':len(mesh.data.vertices),'bones':len(rigdata.bones),'animations':['Idle','Walk','AttackRight','AttackLeft'],'materials':'Vertex colors; procedural microdetail approximated, not texture-baked'}
 with open(os.path.join(OUT,'build_report.json'),'w') as f:json.dump(report,f,indent=2)
 print('REBUILD_COMPLETE',report,flush=True)
+
+
+
+
 
 
 

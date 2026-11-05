@@ -15,6 +15,11 @@ var gait := 0.0
 var hit_flash := 0.0
 var attack_elapsed := -1.0
 var attack_hit := false
+var attack_right := true
+var next_attack_right := true
+const LUNGE_START := .58
+const LUNGE_END := .90
+const LUNGE_SPEED := 2.8
 const HEAVY_WINDUP := 0.65
 const HEAVY_IMPACT := 0.78
 const HEAVY_DURATION := 1.45
@@ -42,7 +47,7 @@ func _ready() -> void:
 func animate_model(delta: float) -> void:
 	if heavy:
 		gait += Vector2(velocity.x, velocity.z).length() * delta * preload("res://scripts/chamelenoid_model.gd").GAIT_PER_METER
-		model.animate(gait, 1.0 if state == "PERSIGUIENDO" else 0.0, attack_elapsed)
+		model.animate(gait, 1.0 if state == "PERSIGUIENDO" else 0.0, attack_elapsed, attack_right)
 		hit_flash = maxf(0.0, hit_flash - delta)
 		eye.light_energy = 2.5 if hit_flash > 0 else (0.7 if state == "PREPARANDO" else 0.0)
 		return
@@ -99,6 +104,7 @@ func sees_player() -> bool:
 	return not hit.is_empty() and hit.collider == player
 
 func update_heavy(delta: float) -> void:
+	var pending_impact := false
 	cooldown = maxf(0.0, cooldown-delta)
 	var offset := player.global_position-global_position
 	var distance := offset.length()
@@ -107,21 +113,26 @@ func update_heavy(delta: float) -> void:
 	velocity.z=0
 	if attack_elapsed >= 0:
 		# Commit to the direction of the windup, so a sidestep can evade the swipe.
+		var previous := attack_elapsed
 		attack_elapsed += delta
+		pending_impact=attack_elapsed>=HEAVY_IMPACT and not attack_hit
+		var overlap := maxf(0.0, minf(attack_elapsed,LUNGE_END)-maxf(previous,LUNGE_START))
+		var lunge := -global_basis.z * LUNGE_SPEED * overlap / maxf(delta,.0001)
+		velocity.x=lunge.x
+		velocity.z=lunge.z
 		state = "PREPARANDO" if attack_elapsed < HEAVY_WINDUP else ("ATACANDO" if attack_elapsed < .9 else "RECUPERANDO")
-		if attack_elapsed >= HEAVY_IMPACT and not attack_hit:
-			attack_hit=true
-			if distance < 2.1 and (-global_basis.z).dot(direction) > .35 and sees_player():
-				player.take_damage(28.0)
 		if attack_elapsed >= HEAVY_DURATION:
 			attack_elapsed=-1
 			cooldown=.35
 			state="RECUPERANDO"
 	elif distance < 19.0 and sees_player():
 		rotation.y=lerp_angle(rotation.y,atan2(-direction.x,-direction.z),minf(1.0,delta*6.0))
-		if distance < 2.0:
+		if distance < 2.7:
 			state="RECUPERANDO"
 			if cooldown <= 0:
+				rotation.y=atan2(-direction.x,-direction.z)
+				attack_right=next_attack_right
+				next_attack_right=not next_attack_right
 				attack_elapsed=0
 				attack_hit=false
 				state="PREPARANDO"
@@ -134,4 +145,11 @@ func update_heavy(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y-=20.0*delta
 	move_and_slide()
+	if pending_impact:
+		attack_hit=true
+		var target := player.global_position-global_position
+		var planar := Vector3(target.x,0,target.z)
+		if target.length() < 2.1 and (-global_basis.z).dot(planar.normalized()) > .35 and sees_player():
+			player.take_damage(28.0)
 	animate_model(delta)
+
