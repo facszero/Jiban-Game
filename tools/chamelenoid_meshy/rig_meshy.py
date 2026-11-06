@@ -149,8 +149,8 @@ def pose(t,mode):
     attack=mode.startswith('Attack')
     if mode=='Walk':
         phase=t*math.tau
-        compression=.075+.018*(.5+.5*math.cos(2*phase))
-        shift=Vector((.025*math.cos(phase),0,-compression))
+        compression=.065+.012*(.5+.5*math.cos(2*phase))
+        shift=Vector((.012*math.cos(phase),0,-compression))
         rig.pose.bones['pelvis'].location=rigdata.bones['pelvis'].matrix_local.to_quaternion().inverted() @ shift
         rig.pose.bones['chest'].rotation_euler.x=.09
         rig.pose.bones['chest'].rotation_euler.y=.055*math.sin(phase)
@@ -158,8 +158,8 @@ def pose(t,mode):
         rig.pose.bones['head'].rotation_euler.x=-.07
         for side,offset in [('L',0),('R',math.pi)]:
             a=math.sin(phase+offset-.25)
-            rig.pose.bones['upper_arm.'+side].rotation_euler.x=-.12*a
-            rig.pose.bones['forearm.'+side].rotation_euler.x=-.12
+            rig.pose.bones['upper_arm.'+side].rotation_euler.x=-.22*a
+            rig.pose.bones['forearm.'+side].rotation_euler.x=-.22
     elif mode=='Stagger':
         pulse=math.sin(math.pi*smooth(0,.70,t))
         rig.pose.bones['chest'].rotation_euler.x=-.24*pulse
@@ -199,11 +199,11 @@ def pose(t,mode):
     if mode=='Walk':
         for side,offset in [('L',0),('R',.5)]:
             step=(t+offset)%1
-            # Long planted support; short low-clearance swing.
-            if step<.65: y=-.39+.78*step/.65;lift=0
+            # Stance travel matches GAIT_PER_METER; swing clears the floor.
+            if step<.56: y=-.36+.72*step/.56;lift=0
             else:
-                u=(step-.65)/.35;y=.39-.78*smooth(0,1,u);lift=.075*math.sin(math.pi*u)
-            leg_target(side,Vector((-.30 if side=='L' else .30,.015+y,.17+lift)),shift)
+                u=(step-.56)/.44;y=.36-.72*smooth(0,1,u);lift=.16*math.sin(math.pi*u)
+            leg_target(side,Vector((-.31 if side=='L' else .31,.015+y,.18+lift)),shift)
     elif mode=='Death':
         q=rigdata.bones['pelvis'].matrix_local.to_quaternion()
         rig.pose.bones['pelvis'].rotation_quaternion=q.inverted() @ Quaternion((0,0,1),.12*fall) @ Quaternion((1,0,0),1.53*fall) @ q
@@ -246,3 +246,13 @@ mesh.data.calc_loop_triangles()
 report={'source':'Meshy user-provided GLB','triangles':len(mesh.data.loop_triangles),'vertices':len(mesh.data.vertices),'bones':len(rigdata.bones),'animations':['Idle','Walk','AttackRight','AttackLeft','Stagger','Death'],'materials':'Original Meshy PBR textures preserved'}
 with open(os.path.join(OUT,'build_report.json'),'w') as f:json.dump(report,f,indent=2)
 print('REBUILD_COMPLETE',report,flush=True)
+
+
+
+
+
+
+
+
+
+

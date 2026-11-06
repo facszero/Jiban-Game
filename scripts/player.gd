@@ -17,6 +17,8 @@ var reload_time := 0.0
 var hurt_time := 0.0
 var first_person := false
 var pitch := -0.04
+var mouse_settle_until := 0
+var mouse_was_captured := false
 var pivot: Node3D
 var camera: Camera3D
 var body_model: Node3D
@@ -36,6 +38,7 @@ var combat_hold := 0.0
 var lamp: SpotLight3D
 
 func _ready() -> void:
+	get_viewport().size_changed.connect(reset_mouse_capture)
 	add_to_group("player")
 	collision_layer = 2
 	collision_mask = 5
@@ -77,12 +80,43 @@ func build_model() -> void:
 	leg_left = body_model.leg_left
 	leg_right = body_model.leg_right
 
+func reset_mouse_capture() -> void:
+	# Discard recentering events while the browser acquires pointer lock.
+	mouse_settle_until = Time.get_ticks_msec() + 100
+	mouse_was_captured = false
+
+func capture_mouse() -> void:
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		return
+	reset_mouse_capture()
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		reset_mouse_capture()
+
+func apply_mouse_motion(event: InputEventMouseMotion) -> void:
+	var captured := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	if not captured:
+		mouse_was_captured = false
+		return
+	if not mouse_was_captured:
+		mouse_was_captured = true
+		mouse_settle_until = Time.get_ticks_msec() + 100
+		return
+	if Time.get_ticks_msec() < mouse_settle_until:
+		return
+	var motion := event.screen_relative
+	if not motion.is_finite():
+		return
+	rotate_y(-motion.x * sensitivity)
+	pitch = clampf(pitch - motion.y * sensitivity, -1.25, 1.25)
+
 func _unhandled_input(event: InputEvent) -> void:
 	if health <= 0.0 or get_tree().paused:
 		return
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		rotate_y(-event.relative.x * sensitivity)
-		pitch = clampf(pitch - event.relative.y * sensitivity, -1.25, 1.25)
+	if event is InputEventMouseMotion:
+		apply_mouse_motion(event)
 	if event.is_action_pressed("view"):
 		first_person = not first_person
 	if event.is_action_pressed("reload"):

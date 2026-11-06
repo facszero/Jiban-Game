@@ -38,7 +38,7 @@ func _ready() -> void:
 	collision_layer = 4
 	collision_mask = 7
 	health = 175.0 if heavy else 75.0
-	speed = 1.25 if heavy else 2.2
+	speed = preload("res://scripts/chamelenoid_model.gd").CHASE_SPEED if heavy else 2.2
 	var scale_factor := 1.35 if heavy else 1.0
 	var col := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()

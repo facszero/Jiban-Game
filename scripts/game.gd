@@ -52,7 +52,7 @@ func _ready() -> void:
 	create_sound()
 	create_ambience()
 	if not OS.has_feature("web"):
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		player.capture_mouse()
 
 func setup_environment() -> void:
 	var world := WorldEnvironment.new()
@@ -95,7 +95,7 @@ func create_hud() -> void:
 	hud = text_label(frame, Vector2(30, 20), 24)
 	hud.text = "JIBAN // SISTEMAS OPERATIVOS"
 	var version_label := text_label(frame, Vector2(355, 77), 14)
-	version_label.text = "v0.9.0-prueba"
+	version_label.text = "v0.9.1-prueba"
 	for i in range(2):
 		var bar := ProgressBar.new()
 		frame.add_child(bar)
@@ -164,14 +164,14 @@ func create_hud() -> void:
 	sensitivity.value_changed.connect(func(value): player.sensitivity = value)
 	var subtitle := Label.new()
 	menu.add_child(subtitle)
-	subtitle.text = "Sensibilidad del ratón\nVersión 0.6.3 · revisión de personajes"
+	subtitle.text = "Sensibilidad del ratón\nVersión 0.9.1 · revisión de personajes"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 func _unhandled_input(event: InputEvent) -> void:
 	if is_instance_valid(model_review):
 		return
 	if OS.has_feature("web") and event is InputEventMouseButton and event.pressed and not get_tree().paused and not DisplayServer.is_touchscreen_available():
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		player.capture_mouse()
 	if event.is_action_pressed("pause_game") and player.health > 0.0 and not finished:
 		set_pause(not get_tree().paused)
 	if event.is_action_pressed("interact") and not get_tree().paused and is_instance_valid(target_terminal):
@@ -237,7 +237,11 @@ func set_pause(value: bool) -> void:
 	if value:
 		resume_button.grab_focus()
 	if not DisplayServer.is_touchscreen_available():
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if value else Input.MOUSE_MODE_CAPTURED
+		if value:
+			player.reset_mouse_capture()
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		else:
+			player.capture_mouse()
 
 func on_death() -> void:
 	set_pause(true)
@@ -348,3 +352,7 @@ func open_model_review() -> void:
 		touch_controls.set_process_input(true)
 		touch_controls.set_process_unhandled_input(true)
 	)
+
+
+
+

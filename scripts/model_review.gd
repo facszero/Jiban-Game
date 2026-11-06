@@ -197,7 +197,7 @@ func orbit_input(event: InputEvent) -> void:
 		stop_spin()
 		update_camera()
 func _process(delta: float) -> void:
-	phase+=delta*(1.25*preload("res://scripts/chamelenoid_model.gd").GAIT_PER_METER if creature_selected or comparison_selected else 5.0)
+	phase+=delta*(preload("res://scripts/chamelenoid_model.gd").CHASE_SPEED*preload("res://scripts/chamelenoid_model.gd").GAIT_PER_METER if creature_selected or comparison_selected else 5.0)
 	if comparison_selected:
 		model.animate_all(phase,walking)
 	elif creature_selected:
@@ -264,3 +264,5 @@ func select_model(index: int) -> void:
 	for i in range(3):
 		gait_selector.set_item_text(i,("Mask: " if mask_selected else "Jiban: ")+["caminar","correr","apuntando"][i])
 	update_camera()
+
+

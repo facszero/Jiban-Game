@@ -1,7 +1,8 @@
 extends Node3D
 ## Reconstructed sculpt, sampled against the combat clock.
 const GAME_SCALE := 1.1
-const GAIT_PER_METER := 4.5
+const CHASE_SPEED := 1.9
+const GAIT_PER_METER := TAU * .56 / (.72 * .86 * GAME_SCALE)
 const ASSET = preload("res://assets/chamelenoid/chamelenoid.glb")
 var skeleton: Skeleton3D
 var player: AnimationPlayer

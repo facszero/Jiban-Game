@@ -22,6 +22,12 @@ jobs:
           curl -fsSL --retry 3 https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_export_templates.tpz -o /tmp/templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/4.5.1.stable
           unzip -j -q /tmp/templates.tpz 'templates/web_nothreads_*.zip' -d ~/.local/share/godot/export_templates/4.5.1.stable
+      - name: Prepare virtual display for mouse input tests
+        run: |
+          if ! command -v xvfb-run >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y xvfb
+          fi
       - name: Validate and export
         shell: bash
         run: |
@@ -58,6 +64,12 @@ jobs:
           timeout 30 "$GODOT" --headless --script res://tests/comparison.gd 2>&1 | tee /tmp/comparison.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/comparison.log
           grep -q 'COMPARISON RESULT: 0 failures' /tmp/comparison.log
+          timeout 30 xvfb-run -a "$GODOT" --audio-driver Dummy --rendering-method gl_compatibility --script res://tests/input_stability.gd 2>&1 | tee /tmp/input_stability.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/input_stability.log
+          grep -q 'INPUT STABILITY RESULT: 0 failures' /tmp/input_stability.log
+          timeout 30 "$GODOT" --headless --script res://tests/heavy_gait.gd 2>&1 | tee /tmp/heavy_gait.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/heavy_gait.log
+          grep -q 'HEAVY GAIT RESULT: 0 failures' /tmp/heavy_gait.log
           mkdir -p exports/web
           WEB_BUILD="jiban-${GITHUB_SHA:0:12}"
           "$GODOT" --headless --export-release Web "exports/web/${WEB_BUILD}.html" 2>&1 | tee /tmp/export.log
