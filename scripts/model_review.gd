@@ -49,18 +49,29 @@ func _ready() -> void:
 	var world := WorldEnvironment.new()
 	var env := Environment.new()
 	env.background_mode=Environment.BG_COLOR
-	env.background_color=Color(.025,.038,.055)
+	env.background_color=Color(.055,.060,.058)
 	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color=Color(.72,.8,.95)
-	env.ambient_light_energy=.6
+	env.ambient_light_color=Color(.88,.86,.81)
+	env.ambient_light_energy=.45
 	world.environment=env
 	viewport.add_child(world)
-	for spec in [[Vector3(-35,-35,0),Color(.85,.92,1),1.8],[Vector3(-15,140,0),Color(.45,.65,1),1.6],[Vector3(15,55,0),Color(1,.7,.5),.65]]:
+	for spec in [[Vector3(-35,-35,0),Color(1,.96,.88),1.2],[Vector3(-15,140,0),Color(.72,.79,.83),.6],[Vector3(15,55,0),Color(1,.72,.48),.65]]:
 		var light := DirectionalLight3D.new()
 		viewport.add_child(light)
 		light.rotation_degrees=spec[0]
 		light.light_color=spec[1]
 		light.light_energy=spec[2]
+		light.shadow_enabled=spec[2]>.9
+	var ground := MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size=Vector2(12,12)
+	ground.mesh=plane
+	ground.position.y=-.018
+	var ground_mat := StandardMaterial3D.new()
+	ground_mat.albedo_color=Color(.025,.028,.026)
+	ground_mat.roughness=1.0
+	ground.material_override=ground_mat
+	viewport.add_child(ground)
 	model=preload("res://scripts/jiban_model.gd").new()
 	viewport.add_child(model)
 	camera=Camera3D.new()
@@ -253,5 +264,3 @@ func select_model(index: int) -> void:
 	for i in range(3):
 		gait_selector.set_item_text(i,("Mask: " if mask_selected else "Jiban: ")+["caminar","correr","apuntando"][i])
 	update_camera()
-
-

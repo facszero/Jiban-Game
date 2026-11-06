@@ -1,6 +1,7 @@
 {
-  "triangles": 27019,
-  "vertices": 14617,
+  "source": "Meshy user-provided GLB",
+  "triangles": 59998,
+  "vertices": 51661,
   "bones": 16,
   "animations": [
     "Idle",
@@ -10,5 +11,5 @@
     "Stagger",
     "Death"
   ],
-  "materials": "Vertex colors; procedural microdetail approximated, not texture-baked"
+  "materials": "Original Meshy PBR textures preserved"
 }

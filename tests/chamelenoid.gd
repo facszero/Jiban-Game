@@ -65,7 +65,7 @@ func run() -> void:
 	check(studio.model.get_script()==enemy.model.get_script(),"Studio and combat share creature model")
 	measure(studio.model)
 	print("CHAMELENOID BUDGET: %d meshes / %d triangles" % [mesh_count,triangle_count])
-	check(mesh_count<=70 and triangle_count<=35000,"Creature geometry stays in budget")
+	check(mesh_count<=70 and triangle_count<=65000,"Creature geometry stays in budget")
 	var creature=studio.model
 	check(creature.skeleton.get_bone_count()==16,"Imported skeleton has all joints")
 	check(creature.clips.size()==6,"Locomotion, swipes and reactions imported")
@@ -110,5 +110,3 @@ func measure(node: Node) -> void:
 			triangle_count+=(indices.size() if indices!=null and indices.size()>0 else arrays[Mesh.ARRAY_VERTEX].size())/3
 	for child in node.get_children():
 		measure(child)
-
-

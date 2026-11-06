@@ -95,7 +95,7 @@ func create_hud() -> void:
 	hud = text_label(frame, Vector2(30, 20), 24)
 	hud.text = "JIBAN // SISTEMAS OPERATIVOS"
 	var version_label := text_label(frame, Vector2(355, 77), 14)
-	version_label.text = "v0.7.2-prueba"
+	version_label.text = "v0.9.0-prueba"
 	for i in range(2):
 		var bar := ProgressBar.new()
 		frame.add_child(bar)
@@ -348,7 +348,3 @@ func open_model_review() -> void:
 		touch_controls.set_process_input(true)
 		touch_controls.set_process_unhandled_input(true)
 	)
-
-
-
-

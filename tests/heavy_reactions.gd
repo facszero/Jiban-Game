@@ -65,7 +65,7 @@ func run() -> void:
 	check(enemy.collision_layer==0 and enemy.attack_elapsed<0,"Corpse cannot block player or attack")
 	enemy.model.animate(0,0,-1,true,-1,-1,1.8)
 	check(enemy.model.joint_position("head").y<1.0,"Death ends with head near floor")
-	check(absf(enemy.model.joint_position("head").x-enemy.model.joint_position("foot.R").x)>.8,"Death leaves body lying sideways")
+	check(absf(enemy.model.joint_position("head").z-enemy.model.joint_position("foot.R").z)>1.0,"Death leaves body collapsed forward")
 	enemy.update_death(4.1)
 	await process_frame
 	check(not is_instance_valid(enemy),"Corpse is removed after its display time")
