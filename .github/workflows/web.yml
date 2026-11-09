@@ -67,6 +67,12 @@ jobs:
           timeout 30 xvfb-run -a "$GODOT" --audio-driver Dummy --rendering-method gl_compatibility --script res://tests/input_stability.gd 2>&1 | tee /tmp/input_stability.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/input_stability.log
           grep -q 'INPUT STABILITY RESULT: 0 failures' /tmp/input_stability.log
+          timeout 60 "$GODOT" --headless --script res://tests/jiban_skin.gd 2>&1 | tee /tmp/jiban_skin.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/jiban_skin.log
+          grep -q 'JIBAN SKIN RESULT: 0 failures' /tmp/jiban_skin.log
+          timeout 60 "$GODOT" --headless --script res://tests/bioron_skin.gd 2>&1 | tee /tmp/bioron_skin.log
+          ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/bioron_skin.log
+          grep -q 'BIORON SKIN RESULT: 0 failures' /tmp/bioron_skin.log
           timeout 30 "$GODOT" --headless --script res://tests/heavy_gait.gd 2>&1 | tee /tmp/heavy_gait.log
           ! grep -E 'SCRIPT ERROR|^ERROR:' /tmp/heavy_gait.log
           grep -q 'HEAVY GAIT RESULT: 0 failures' /tmp/heavy_gait.log

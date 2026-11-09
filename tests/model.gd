@@ -33,7 +33,8 @@ func run() -> void:
 	check(review.viewport.own_world_3d,"Studio has isolated 3D world")
 	count_meshes(review.model)
 	print("MODEL BUDGET: %d meshes / %d triangles" % [meshes,triangles])
-	check(meshes<=70 and triangles<=35000,"Model geometry budget")
+	check(meshes<=70 and triangles<=155000,"Model geometry budget")
+	check(review.model.skin_skeleton.get_bone_count()==15,"Imported Jiban skeleton active")
 	review.model.animate(PI/2,1.0,true)
 	check(review.model.knees[0].rotation.x<-.5 and review.model.arm_right.rotation.x>1.0,"Knee and aiming joints animate")
 	var start_yaw: float=review.yaw

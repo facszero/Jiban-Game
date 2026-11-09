@@ -62,6 +62,7 @@ func setup_environment() -> void:
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(0.45, 0.55, 0.7)
 	environment.ambient_light_energy = 0.65
+	preload("res://scripts/character_reflections.gd").apply(environment)
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	world.environment = environment
 	add_child(world)
@@ -95,7 +96,7 @@ func create_hud() -> void:
 	hud = text_label(frame, Vector2(30, 20), 24)
 	hud.text = "JIBAN // SISTEMAS OPERATIVOS"
 	var version_label := text_label(frame, Vector2(355, 77), 14)
-	version_label.text = "v0.9.1-prueba"
+	version_label.text = "v0.10.0-prueba"
 	for i in range(2):
 		var bar := ProgressBar.new()
 		frame.add_child(bar)
@@ -164,7 +165,7 @@ func create_hud() -> void:
 	sensitivity.value_changed.connect(func(value): player.sensitivity = value)
 	var subtitle := Label.new()
 	menu.add_child(subtitle)
-	subtitle.text = "Sensibilidad del ratón\nVersión 0.9.1 · revisión de personajes"
+	subtitle.text = "Sensibilidad del ratón\nVersión 0.10.0 · revisión de personajes"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 func _unhandled_input(event: InputEvent) -> void:

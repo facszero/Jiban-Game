@@ -2,7 +2,7 @@ extends Node3D
 const Geo=preload("res://scripts/geometry.gd")
 var characters: Array[Node3D]=[]
 func _ready() -> void:
-	var scripts=[preload("res://scripts/jiban_model.gd"),preload("res://scripts/mask_model.gd"),preload("res://scripts/chamelenoid_model.gd")]
+	var scripts=[preload("res://scripts/jiban_meshy_model.gd"),preload("res://scripts/bioron_meshy_model.gd"),preload("res://scripts/chamelenoid_model.gd")]
 	for i in range(3):
 		var character: Node3D=scripts[i].new()
 		add_child(character)

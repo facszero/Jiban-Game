@@ -73,7 +73,7 @@ func _ready() -> void:
 	update_camera(1.0)
 
 func build_model() -> void:
-	body_model = preload("res://scripts/jiban_model.gd").new()
+	body_model = preload("res://scripts/jiban_meshy_model.gd").new()
 	add_child(body_model)
 	arm_left = body_model.arm_left
 	arm_right = body_model.arm_right

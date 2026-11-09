@@ -47,7 +47,7 @@ func _ready() -> void:
 	col.shape = capsule
 	col.position.y = capsule.height / 2.0
 	add_child(col)
-	model = preload("res://scripts/chamelenoid_model.gd").new() if heavy else preload("res://scripts/mask_model.gd").new()
+	model = preload("res://scripts/chamelenoid_model.gd").new() if heavy else preload("res://scripts/bioron_meshy_model.gd").new()
 	add_child(model)
 	model.scale = Vector3.ONE * (preload("res://scripts/chamelenoid_model.gd").GAME_SCALE if heavy else scale_factor)
 	eye = Geo.light(self, Vector3(0, 1.5, -0.4), Color(1, 0.12, 0.03), 0.0, 2.0)
@@ -62,6 +62,7 @@ func animate_model(delta: float) -> void:
 		return
 	model.update_locomotion(delta,global_basis.inverse()*velocity,false,state=="ATACANDO",is_on_floor())
 	model.upper_body.rotation.x += sin(hit_flash*PI/.12)*.12
+	if model.has_method("sync_skin"): model.sync_skin()
 	hit_flash = maxf(0.0, hit_flash - delta)
 	eye.light_energy = 2.5 if hit_flash > 0.0 else 0.0
 

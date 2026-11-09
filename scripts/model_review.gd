@@ -53,6 +53,7 @@ func _ready() -> void:
 	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color=Color(.88,.86,.81)
 	env.ambient_light_energy=.45
+	preload("res://scripts/character_reflections.gd").apply(env)
 	world.environment=env
 	viewport.add_child(world)
 	for spec in [[Vector3(-35,-35,0),Color(1,.96,.88),1.2],[Vector3(-15,140,0),Color(.72,.79,.83),.6],[Vector3(15,55,0),Color(1,.72,.48),.65]]:
@@ -72,7 +73,7 @@ func _ready() -> void:
 	ground_mat.roughness=1.0
 	ground.material_override=ground_mat
 	viewport.add_child(ground)
-	model=preload("res://scripts/jiban_model.gd").new()
+	model=preload("res://scripts/jiban_meshy_model.gd").new()
 	viewport.add_child(model)
 	camera=Camera3D.new()
 	viewport.add_child(camera)
@@ -82,7 +83,7 @@ func _ready() -> void:
 	title = Label.new()
 	frame.add_child(title)
 	title.position=Vector2(30,24)
-	title.text="JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 5"
+	title.text="JIBAN / ESTUDIO DE ARMADURA\nModelo Meshy · primera integración"
 	title.add_theme_font_size_override("font_size",23)
 	title.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	selector = OptionButton.new()
@@ -236,10 +237,10 @@ func select_model(index: int) -> void:
 	comparison_selected=index==3
 	viewport.remove_child(model)
 	model.free()
-	model=preload("res://scripts/chamelenoid_model.gd").new() if creature_selected else preload("res://scripts/jiban_model.gd").new()
+	model=preload("res://scripts/chamelenoid_model.gd").new() if creature_selected else preload("res://scripts/jiban_meshy_model.gd").new()
 	if mask_selected:
 		model.free()
-		model=preload("res://scripts/mask_model.gd").new()
+		model=preload("res://scripts/bioron_meshy_model.gd").new()
 	if comparison_selected:
 		model.free()
 		model=preload("res://scripts/character_comparison.gd").new()
@@ -252,9 +253,9 @@ func select_model(index: int) -> void:
 	distance=8.8 if comparison_selected else (4.35 if creature_selected else 3.65)
 	pitch=.08
 	yaw=-.35
-	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión integral" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo 3D · revisión 5"
+	title.text="CHAMELENOID / ESTUDIO DE CRIATURA\nModelo 3D · revisión integral" if creature_selected else "JIBAN / ESTUDIO DE ARMADURA\nModelo Meshy · primera integración"
 	if mask_selected:
-		title.text="MASK / BIORON\nModelo 3D · revisión 1"
+		title.text="MASK / BIORON\nModelo Meshy · primera integración"
 	if comparison_selected:
 		title.text="COMPARACIÓN DE ESCALA\nMismo suelo · tamaños de la partida"
 		yaw=0.0
