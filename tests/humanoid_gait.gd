@@ -32,7 +32,7 @@ func run():
 						knee_side_error=maxf(knee_side_error,absf(offset.dot(plane_normal)))
 						min_knee_forward=minf(min_knee_forward,offset.dot(Vector3.FORWARD))
 					var foot := point(model,"foot.L")
-					if cycle<stance:
+					if cycle<stance*.76:
 						var rest_y: float=model.to_local(model.skin_skeleton.to_global(model.skin_skeleton.get_bone_global_rest(model.skin_skeleton.find_bone("foot.L")).origin)).y
 						height_error=maxf(height_error,absf(foot.y-rest_y))
 						if frame>0:

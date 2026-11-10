@@ -40,6 +40,19 @@ func run():
 		player.cooldown=0
 		player.shoot()
 	check(is_equal_approx(player.pitch,before),"Firing preserves intended pitch")
+	await process_frame
+	player.pitch=0
+	player.rotation.y=0
+	motion.screen_relative=Vector2(4000,4000)
+	for i in range(20):player._unhandled_input(motion)
+	check(absf(player.pitch)<=.16001 and absf(player.rotation.y)<=.30001,"Large mouse event bursts cannot snap aim to floor or ceiling")
+	before=player.pitch
+	await process_frame
+	check(is_equal_approx(player.pitch,before),"Excess mouse movement is discarded, not replayed later")
+	motion.screen_relative=Vector2(20,10)
+	player._unhandled_input(motion)
+	check(is_equal_approx(player.pitch,before-10*player.sensitivity),"Normal aim resumes immediately after a spike")
+	before=player.pitch
 	game.set_pause(true)
 	player._unhandled_input(motion)
 	check(is_equal_approx(player.pitch,before),"Paused mouse movement does not aim")

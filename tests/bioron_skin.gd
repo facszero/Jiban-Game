@@ -17,7 +17,11 @@ func run():
 	var weights=arrays[Mesh.ARRAY_WEIGHTS]
 	var indices=arrays[Mesh.ARRAY_INDEX]
 	var count:int=weights.size()/vertices.size()
-	for spec in [["idle",0,0,0,0],["walk",PI/2,1,0,0],["run",PI/2,1,1,0],["aim",0,0,0,1],["aim_walk",PI/2,1,0,1]]:
+	var poses := [["idle",0,0,0,0],["walk",PI/2,1,0,0],["run",PI/2,1,1,0],["aim",0,0,0,1],["aim_walk",PI/2,1,0,1],["toe_off",TAU*.54,1,0,0],["recovery",TAU*.8,1,0,0],["run_toe_off",TAU*.40,1,1,0]]
+	for frame in range(12):
+		poses.append(["walk_cycle_%d"%frame,TAU*frame/12.0,1,0,0])
+		poses.append(["run_cycle_%d"%frame,TAU*frame/12.0,1,1,0])
+	for spec in poses:
 		model.pose(spec[1],spec[2],spec[3],spec[4],Vector2(0,-1),true)
 		var transforms=[]
 		for bind in range(mesh.skin.get_bind_count()):

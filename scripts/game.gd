@@ -96,7 +96,7 @@ func create_hud() -> void:
 	hud = text_label(frame, Vector2(30, 20), 24)
 	hud.text = "JIBAN // SISTEMAS OPERATIVOS"
 	var version_label := text_label(frame, Vector2(355, 77), 14)
-	version_label.text = "v0.10.1-prueba"
+	version_label.text = "v0.10.2-prueba"
 	for i in range(2):
 		var bar := ProgressBar.new()
 		frame.add_child(bar)
@@ -157,15 +157,15 @@ func create_hud() -> void:
 	review_button.pressed.connect(open_model_review)
 	var sensitivity := HSlider.new()
 	menu.add_child(sensitivity)
-	sensitivity.min_value = 0.001
-	sensitivity.max_value = 0.006
-	sensitivity.step = 0.00025
+	sensitivity.min_value = 0.0004
+	sensitivity.max_value = 0.003
+	sensitivity.step = 0.0001
 	sensitivity.value = player.sensitivity
 	sensitivity.tooltip_text = "Sensibilidad del ratón"
 	sensitivity.value_changed.connect(func(value): player.sensitivity = value)
 	var subtitle := Label.new()
 	menu.add_child(subtitle)
-	subtitle.text = "Sensibilidad del ratón\nVersión 0.10.1 · revisión de personajes"
+	subtitle.text = "Sensibilidad del ratón\nVersión 0.10.2 · revisión de personajes"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 func _unhandled_input(event: InputEvent) -> void:

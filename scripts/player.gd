@@ -7,7 +7,7 @@ const Geo = preload("res://scripts/geometry.gd")
 @export var walk_speed := 2.0
 @export var run_speed := 4.6
 @export var damage := 25.0
-@export var sensitivity := 0.0025
+@export var sensitivity := 0.0012
 var health := 180.0
 var energy := 120.0
 var ammo := 12
@@ -19,6 +19,8 @@ var first_person := false
 var pitch := -0.04
 var mouse_settle_until := 0
 var mouse_was_captured := false
+var mouse_budget_frame := -1
+var mouse_turn_this_frame := Vector2.ZERO
 var pivot: Node3D
 var camera: Camera3D
 var body_model: Node3D
@@ -109,8 +111,18 @@ func apply_mouse_motion(event: InputEventMouseMotion) -> void:
 	var motion := event.screen_relative
 	if not motion.is_finite():
 		return
-	rotate_y(-motion.x * sensitivity)
-	pitch = clampf(pitch - motion.y * sensitivity, -1.25, 1.25)
+	# Bound accumulated rotation per rendered frame, including event bursts.
+	# Excess input is discarded rather than queued into a delayed camera jump.
+	var frame := Engine.get_process_frames()
+	if frame!=mouse_budget_frame:
+		mouse_budget_frame=frame
+		mouse_turn_this_frame=Vector2.ZERO
+	var desired := motion*sensitivity
+	var remaining := Vector2(.30,.16)-mouse_turn_this_frame
+	var turn := Vector2(clampf(desired.x,-remaining.x,remaining.x),clampf(desired.y,-remaining.y,remaining.y))
+	mouse_turn_this_frame+=turn.abs()
+	rotate_y(-turn.x)
+	pitch = clampf(pitch-turn.y,-1.25,1.25)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if health <= 0.0 or get_tree().paused:

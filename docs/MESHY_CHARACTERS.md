@@ -1,4 +1,4 @@
-# Meshy integration — 0.10.1
+# Meshy integration — 0.10.2
 
 Bioron now uses the replacement A-pose design supplied on November 10 (70,000 triangles), instead of the old crouched firing sculpt. Its bind pose stays intact, with arm alignment applied at runtime. The separate service pistol attaches to the actual hand bone. Hands have no articulated finger animation yet.
 
@@ -7,3 +7,8 @@ Jiban (150,000 triangles) and Bioron use leg IK based on their actual bone lengt
 Chamelenoid now dissolves with irregular green corrosion edges over 2.2 seconds, holding the last living pose instead of falling rigidly forward. Death still immediately disables attacks and collisions and completes encounters once. Material overrides are per instance and reset in the studio.
 
 The user-supplied service pistol (60,000 triangles) replaces Jiban's first-person gun. Original color/metal/roughness textures are retained, tangent normals rebaked, and the red strip receives selective emission. The existing procedural glove/forearm remains. The muzzle marker is calibrated to the imported barrel and tested through camera yaw/pitch and weapon withdrawal. Third-person Jiban weapon remains part of its character mesh.
+
+## Walking and mouse follow-up
+The walk now rolls off the rear toe before swinging the foot forward, with increased recovery clearance. Bioron shoulders preserve their relaxed outward angle instead of collapsing the upper arms into the chest. Weights blend consistently across the crotch throughout the leg regions. Jiban leg joints were relocated to measured source knee/ankle positions and the asymmetric source stance neutralized; boot weights preserve toe shape and transition smoothly into the shin. Steps are centered under each hip, the pelvis rises over the support leg, and the moving body shifts forward instead of maintaining a constant crouch behind the feet. Skin checks include 12 phases each of walking/running plus toe-off, recovery, idle and aiming. Front/profile cycle renders supplement automated checks; these are procedural animations, not motion capture.
+
+Mouse sensitivity defaults to0.0012 instead of0.0025. A per-render-frame angular budget bounds event bursts (0.30rad horizontal,0.16rad vertical); excess motion is discarded rather than queued. Native input tests cover extreme bursts and immediate return to normal movement. The exact user browser/hardware event causing the original jump was not captured, so this verifies the protection rather than reproducing that event.

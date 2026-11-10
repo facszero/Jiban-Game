@@ -49,7 +49,9 @@ func _ready() -> void:
 		if neutralize_arms() and (key.begins_with("upper_arm.") or key.begins_with("forearm.") or key.begins_with("hand.")):
 			var conversion := skin_skeleton.global_basis.inverse()*global_basis
 			var axis := (conversion.inverse()*rest.y).normalized()
-			rest=conversion*Basis(Quaternion(axis,Vector3.DOWN))*conversion.inverse()*rest
+			var outward := -.16 if key.ends_with(".L") else .16
+			var relaxed := Vector3(outward,-1,0).normalized()
+			rest=conversion*Basis(Quaternion(axis,relaxed))*conversion.inverse()*rest
 		skin_rest.append(rest)
 	pose(0,0,0,0,Vector2(0,-1),true)
 func remove_proxy_meshes(node: Node) -> void:
@@ -68,11 +70,13 @@ func pose(phase: float,movement: float,running: float,aiming: float,direction: V
 	gait_direction=direction
 	gait_grounded=grounded
 	# Small vertical travel, relaxed shoulders and opposite arm/leg timing.
-	var bob := movement*(lerpf(.08,.17,running)+lerpf(.008,.018,running)*(1.0+cos(phase*2.0))*.5)
-	pelvis.position=Vector3(sin(phase)*.008*movement,.99-bob,0)
+	var bob := movement*(lerpf(.015,.10,running)+lerpf(.055,.07,running)*pow(cos(phase),2))
+	pelvis.position=Vector3(sin(phase)*.008*movement,.99-bob,0)+Vector3(direction.x,0,direction.y)*lerpf(.085,.11,running)*movement
 	pelvis.rotation=Vector3.ZERO
 	upper_body.position=Vector3(pelvis.position.x*.5,1.2-bob,0)
-	upper_body.rotation=Vector3(-.025*movement,-sin(phase)*.025*movement*(1-aiming),-sin(phase)*.008*movement)
+	upper_body.rotation=Vector3((.10+.035*running)*direction.y*movement,-sin(phase)*.025*movement*(1-aiming),-sin(phase)*.008*movement)
+	arm_left.rotation.z=-.07
+	arm_right.rotation.z=.07
 	var swing := cos(phase)*movement*lerpf(.20,.34,running)
 	arm_left.rotation.x=lerpf(.04-swing,.65,aiming)
 	arm_right.rotation.x=lerpf(.04+swing,PI/2-.12-upper_body.rotation.x,aiming)
@@ -119,11 +123,19 @@ func solve_skin_legs(desired: Array, conversion: Basis) -> void:
 		var swing := clampf((cycle-stance)/(1.0-stance),0,1)
 		var half_step := stride_half(gait_running,gait_aiming)
 		var travel_z := lerpf(-half_step,half_step,cycle/stance) if cycle<stance else half_step*cos(PI*swing)
-		var lift := sin(PI*swing)*lerpf(.055,.11,gait_running) if cycle>=stance else 0.0
+		var lift := sin(PI*swing)*lerpf(.095,.14,gait_running) if cycle>=stance else 0.0
 		# Keep the ankle under its hip and use the real bone lengths.
 		var floor_height := a.y
-		var target := Vector3(h.x,floor_height,0)+Vector3(-gait_direction.x,0,-gait_direction.y)*travel_z*gait_movement
+		var target := Vector3(h.x,floor_height,h.z)+Vector3(-gait_direction.x,0,-gait_direction.y)*travel_z*gait_movement
 		target.y+=lift*gait_movement
+		# Peel the heel away before recovery, with the toe as the support pivot.
+		var peel := smoothstep(stance*.76,stance,cycle) if cycle<stance else 0.0
+		var foot_roll := -.30*peel if cycle<stance else lerpf(-.30,.08,smoothstep(0,.65,swing))*(1-smoothstep(.75,1,swing))
+		foot_roll*=gait_movement
+		var sole_pivot := Vector3(0,-floor_height,-.16)
+		var foot_rotation := Basis(Vector3.RIGHT,foot_roll)
+		var pivot_shift := sole_pivot-foot_rotation*sole_pivot
+		target+=pivot_shift
 		if not gait_grounded:target=Vector3(h.x,floor_height+.08,.04 if i==0 else -.04)
 		var reach := target-hip
 		var distance := minf(reach.length(),(upper+lower)*.998)
@@ -137,4 +149,4 @@ func solve_skin_legs(desired: Array, conversion: Basis) -> void:
 			var rotation := Basis(Quaternion((spec[1] as Vector3).normalized(),(spec[2] as Vector3).normalized()))
 			desired[spec[0]]=conversion*rotation*conversion.inverse()*skin_rest[spec[0]]
 		# Keep the soles level instead of inheriting knee twist.
-		desired[foot]=skin_rest[foot]
+		desired[foot]=conversion*foot_rotation*conversion.inverse()*skin_rest[foot]
