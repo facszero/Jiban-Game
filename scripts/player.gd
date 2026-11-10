@@ -293,7 +293,7 @@ func take_damage(amount: float) -> void:
 
 func build_view_weapon() -> void:
 	view_weapon.position = WEAPON_REST
-	view_pistol = preload("res://scripts/service_weapon.gd").new()
+	view_pistol = preload("res://scripts/meshy_service_weapon.gd").new()
 	view_pistol.include_hand = true
 	view_weapon.add_child(view_pistol)
 

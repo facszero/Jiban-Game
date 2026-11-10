@@ -13,6 +13,11 @@ func run() -> void:
 	await physics_frame
 	await process_frame
 	var player = game.player
+	check(player.view_pistol.get_script()==load("res://scripts/meshy_service_weapon.gd"),"First-person weapon uses supplied Meshy asset")
+	check(player.view_pistol.imported_visual.get_child_count()>0,"Imported pistol geometry loaded")
+	# The source muzzle is at x=-.9508 and y~.49, not at the old procedural barrel.
+	var surface_tip: Vector3=player.view_pistol.imported_visual.transform*Vector3(-.9508,.49,0)
+	check(surface_tip.distance_to(player.view_pistol.muzzle.position)<.005,"Muzzle marker matches imported barrel geometry")
 	player.set_physics_process(false)
 	player.position = Vector3(0, 30, 0)
 	player.first_person = true

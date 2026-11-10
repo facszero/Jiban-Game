@@ -141,7 +141,7 @@ func _ready() -> void:
 	frame.add_child(reaction_selector)
 	reaction_selector.position=Vector2(1030,155)
 	reaction_selector.size=Vector2(220,48)
-	for label in ["PROBAR REACCIÓN", "IMPACTO LEVE", "RETROCESO", "CAÍDA", "VOLVER DE PIE"]:
+	for label in ["PROBAR REACCIÓN", "IMPACTO LEVE", "RETROCESO", "DESINTEGRACIÓN", "VOLVER DE PIE"]:
 		reaction_selector.add_item(label)
 	reaction_selector.visible=false
 	reaction_selector.item_selected.connect(func(index):

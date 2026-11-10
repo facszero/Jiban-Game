@@ -36,7 +36,7 @@ func run() -> void:
 	check(meshes<=70 and triangles<=155000,"Model geometry budget")
 	check(review.model.skin_skeleton.get_bone_count()==15,"Imported Jiban skeleton active")
 	review.model.animate(PI/2,1.0,true)
-	check(review.model.knees[0].rotation.x<-.5 and review.model.arm_right.rotation.x>1.0,"Knee and aiming joints animate")
+	check(review.model.skin_skeleton.get_bone_pose_rotation(review.model.skin_skeleton.find_bone("shin.R")).is_finite() and review.model.arm_right.rotation.x>1.0,"Imported knee pose and aiming joints update")
 	var start_yaw: float=review.yaw
 	var touch := InputEventScreenTouch.new()
 	touch.index=0

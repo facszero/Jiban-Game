@@ -43,7 +43,7 @@ func _ready() -> void:
 	var col := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.4 * scale_factor
-	capsule.height = 1.7 * scale_factor
+	capsule.height = 1.7 * scale_factor if heavy else 1.9
 	col.shape = capsule
 	col.position.y = capsule.height / 2.0
 	add_child(col)

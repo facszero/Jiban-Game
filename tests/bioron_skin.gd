@@ -38,10 +38,11 @@ func run():
 				var d:float=vertices[pair[0]].distance_to(vertices[pair[1]])
 				if d>.004:
 					var ratio:float=posed[pair[0]].distance_to(posed[pair[1]])/d
-					if ratio>worst and ratio>10:print("EDGE ",vertices[pair[0]]," / ",vertices[pair[1]])
+					if ratio>worst and ratio>5:print("EDGE ",vertices[pair[0]]," / ",vertices[pair[1]])
 					worst=maxf(worst,ratio)
 		print("SKIN ",spec[0]," stretch=",worst," floor=",floor_y)
 		if worst>5 or floor_y<-.08:failures+=1
 	model.free()
 	print("BIORON SKIN RESULT: %d failures"%failures)
 	quit(1 if failures else 0)
+
