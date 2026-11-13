@@ -1,4 +1,4 @@
-# Meshy integration — 0.10.2
+# Meshy integration — 0.10.3
 
 Bioron now uses the replacement A-pose design supplied on November 10 (70,000 triangles), instead of the old crouched firing sculpt. Its bind pose stays intact, with arm alignment applied at runtime. The separate service pistol attaches to the actual hand bone. Hands have no articulated finger animation yet.
 
@@ -12,3 +12,6 @@ The user-supplied service pistol (60,000 triangles) replaces Jiban's first-perso
 The walk now rolls off the rear toe before swinging the foot forward, with increased recovery clearance. Bioron shoulders preserve their relaxed outward angle instead of collapsing the upper arms into the chest. Weights blend consistently across the crotch throughout the leg regions. Jiban leg joints were relocated to measured source knee/ankle positions and the asymmetric source stance neutralized; boot weights preserve toe shape and transition smoothly into the shin. Steps are centered under each hip, the pelvis rises over the support leg, and the moving body shifts forward instead of maintaining a constant crouch behind the feet. Skin checks include 12 phases each of walking/running plus toe-off, recovery, idle and aiming. Front/profile cycle renders supplement automated checks; these are procedural animations, not motion capture.
 
 Mouse sensitivity defaults to0.0012 instead of0.0025. A per-render-frame angular budget bounds event bursts (0.30rad horizontal,0.16rad vertical); excess motion is discarded rather than queued. Native input tests cover extreme bursts and immediate return to normal movement. The exact user browser/hardware event causing the original jump was not captured, so this verifies the protection rather than reproducing that event.
+
+## Bioron weapon grip
+The open right hand is replaced at the wrist by a fitted, fixed glove grip. Three fingers wrap the pistol grip, the index reaches the trigger guard, and the thumb rests on the opposite side. A rounded cuff overlaps the retained imported wrist; the left hand is unchanged. The pistol mount is recalibrated to place the grip in the palm instead of laying the gun across the open fingers. Both glove and pistol follow hand.R, with actual wrist alignment and barrel direction tested across a complete aiming walk. Close-up front/back renders supplement those checks. This is a fixed armed-hand pose, not independently animated fingers.

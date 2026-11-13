@@ -21,6 +21,7 @@ func run() -> void:
 	game.set_pause(true)
 	game.open_model_review()
 	game.model_review.select_model(2)
+	game.model_review.set_process(false)
 	var model=game.model_review.model
 	check(model.get_script()==load("res://scripts/bioron_meshy_model.gd"),"Mask selectable in studio")
 	count(model)
@@ -29,8 +30,22 @@ func run() -> void:
 	check(model.ankles.size()==2 and is_instance_valid(model.ankles[0]),"Ankle joints survive batching")
 	for i in range(24): model.pose(TAU*i/24,1,0,0,Vector2(0,-1),true)
 	model.pose(0,0,0,1,Vector2(0,-1),true)
-	var gun=model.elbows[1].get_node("ServicePistol")
-	check((-gun.global_basis.z).dot(Vector3.FORWARD)>.99,"Gameplay weapon marker points forward")
+	await process_frame
+	var gun=model.held_pistol
+	check((-gun.global_basis.z).dot(Vector3.FORWARD)>.99,"Actual held pistol points forward")
+	var wrist_error := 0.0
+	var direction_error := 0.0
+	for frame in range(12):
+		model.pose(TAU*frame/12.0,1,0,1,Vector2(0,-1),true)
+		await process_frame
+		var bone: int = model.skin_skeleton.find_bone("hand.R")
+		var wrist: Vector3=model.skin_skeleton.to_global(model.skin_skeleton.get_bone_global_pose(bone).origin)
+		var glove_wrist: Vector3=model.gripping_hand.to_global(Vector3(0,-.065,.105))
+		wrist_error=maxf(wrist_error,wrist.distance_to(glove_wrist))
+		direction_error=maxf(direction_error,1.0-(-gun.global_basis.z).normalized().dot(Vector3.FORWARD))
+	check(wrist_error<.005,"Grip stays attached to the actual wrist through the aiming walk")
+	print("GRIP direction error=",direction_error," forward=",-gun.global_basis.z)
+	check(direction_error<.01,"Held barrel stays forward through the aiming walk")
 	var mask_enemy: Node3D
 	for enemy in get_nodes_in_group("enemies"):
 		if not enemy.heavy: mask_enemy=enemy; break
@@ -45,3 +60,5 @@ func run() -> void:
 	paused=false
 	print("MASK RESULT: %d failures" % failures)
 	quit(1 if failures else 0)
+
+
