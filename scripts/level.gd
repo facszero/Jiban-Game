@@ -7,6 +7,7 @@ var door: Node3D
 var terminals: Array[Node] = []
 var exit_terminal: Node
 var lamps: Array[OmniLight3D] = []
+var effects: Node3D
 
 func _ready() -> void:
 	var steel := preload("res://scripts/industrial_materials.gd").metal("steel")
@@ -45,6 +46,9 @@ func _ready() -> void:
 	terminals.append(make_terminal(Vector3(-4, 0, -15), "01 / SEGURIDAD"))
 	terminals.append(make_terminal(Vector3(4, 0, -17), "02 / CONTENCIÓN"))
 	exit_terminal = make_terminal(Vector3(0, 0, -53), "ELEVADOR")
+	effects=preload("res://scripts/environment_effects.gd").new()
+	effects.name="EnvironmentEffects"
+	add_child(effects)
 
 func make_terminal(pos: Vector3, title: String) -> Node:
 	var terminal := Terminal.new()
@@ -61,6 +65,7 @@ func spawn_enemy(pos: Vector3, heavy: bool = false) -> Node:
 	return enemy
 
 func open_door() -> void:
+	effects.release_door()
 	var tween := create_tween()
 	tween.tween_property(door, "position:y", 8.4, 1.4).set_trans(Tween.TRANS_SINE)
 

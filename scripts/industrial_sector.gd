@@ -170,17 +170,6 @@ func build_tank(pos: Vector3) -> void:
 	for i in range(3):
 		box(panelpos+Vector3(-.16+i*.16,-.28,.14),Vector3(.09,.08,.04),red if i==0 else dark)
 	Geo.link(self,pos+Vector3(0,3.8,0),pos+Vector3(0,6.2,0),.10,steel)
-	var steam := MeshInstance3D.new()
-	var quad := QuadMesh.new()
-	quad.size=Vector2(1.6,1.3)
-	steam.mesh=quad
-	steam.position=pos+Vector3(-.75,.65,.55)
-	var vapor := ShaderMaterial.new()
-	vapor.shader=preload("res://assets/environment/steam.gdshader")
-	vapor.set_shader_parameter("seed",pos.z)
-	steam.material_override=vapor
-	steam.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(steam)
 	# Condensation streaks are sparse geometry, no screen-space transparency stack.
 	for i in range(14):
 		var a := i*2.399

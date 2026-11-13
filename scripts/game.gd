@@ -102,7 +102,7 @@ func create_hud() -> void:
 	hud = text_label(frame, Vector2(30, 12), 20)
 	hud.text = "JIBAN // SISTEMAS OPERATIVOS"
 	var version_label := text_label(frame, Vector2(325, 60), 13)
-	version_label.text = "v0.11.1-prueba"
+	version_label.text = "v0.11.2-prueba"
 	for i in range(2):
 		var bar := ProgressBar.new()
 		frame.add_child(bar)
