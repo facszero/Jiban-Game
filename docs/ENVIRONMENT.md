@@ -9,3 +9,9 @@ Wall and floor albedo images were generated with the built-in image_gen tool, th
 Validation: tests/environment.gd checks traversal, tank collisions, non-combat specimens and retained consoles. tests/environment_visual.gd renders actual engine entry/lab views and reports draw calls. Standard smoke suite checks movement, camera, shooting, terminal interaction, checkpoint and completion.
 
 The Bioron ranged projectile remains a separate authorized task; this release changes environment presentation only.
+
+## 0.11.1 — security entrance detail
+
+The first security door now carries layered chamfered panels, raised latches and seal rails; all moving details follow its original opening tween. Its collision depth includes the new front surface. Fixed side guides and a local shadow-casting task light articulate the entrance. Consoles have chamfered housings, pedestals, inset full-UV screens, tactile buttons, physical title plates and visible pending/authorized states that follow activation and reset. Security and containment displays are distinct. The HUD top band is smaller and the red wall lighting is more localized. This iteration focuses on the entrance; it does not claim the entire level has reached the concept image.
+
+Visual checks: `tests/security_visual.gd` captures overview, close console, active console and open door. Functional status/reset checks: `tests/security_state.gd`. Existing smoke, touch and environment tests cover gameplay and traversal.

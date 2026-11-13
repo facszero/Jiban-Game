@@ -99,7 +99,7 @@ func build_walls() -> void:
 			light.shadow_bias=.04
 			add_child(light)
 		for side in [-1,1]:
-			if z % 8 == 4: Geo.light(self,Vector3(side*6.7,3.4,z),Color(1,.035,.012),2.5,6)
+			if z % 8 == 4: Geo.light(self,Vector3(side*6.7,3.4,z),Color(1,.055,.025),1.3,4.8)
 
 func build_portal(z: float) -> void:
 	for side in [-1,1]:
@@ -116,7 +116,7 @@ func build_portal(z: float) -> void:
 			box(Vector3(side*x,3,z+.48),Vector3(1.52,5.9,.09),Materials.metal("wall"))
 		box(Vector3(side*4.5,1.1,z+.60),Vector3(1.1,.65,.14),dark)
 		for i in range(6):box(Vector3(side*4.5,.88+i*.08,z+.70),Vector3(.95,.025,.05),steel)
-		var sign := Geo.label(self,Vector3(side*4.6,4.1,z+.65),"B3\nSECTOR 01",48)
+		var sign := Geo.label(self,Vector3(side*4.6,4.1,z+.65),("01 / SEGURIDAD" if side<0 else "02 / CONTENCIÓN") if z == -20.0 else "B3\nSECTOR 01",28 if z == -20.0 else 48)
 		sign.modulate=Color(.52,.50,.47)
 		box(Vector3(side*4.6,2.65,z+.62),Vector3(1.05,1.04,.23),steel)
 		box(Vector3(side*4.6,2.75,z+.76),Vector3(.86,.72,.04),Materials.screen())

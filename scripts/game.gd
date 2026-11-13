@@ -97,17 +97,17 @@ func create_hud() -> void:
 	var banner := ColorRect.new()
 	frame.add_child(banner)
 	banner.color = Color(0.01, 0.025, 0.045, 0.85)
-	banner.size = Vector2(1280, 110)
+	banner.size = Vector2(1280, 84)
 	banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hud = text_label(frame, Vector2(30, 20), 24)
+	hud = text_label(frame, Vector2(30, 12), 20)
 	hud.text = "JIBAN // SISTEMAS OPERATIVOS"
-	var version_label := text_label(frame, Vector2(355, 77), 14)
-	version_label.text = "v0.11.0-prueba"
+	var version_label := text_label(frame, Vector2(325, 60), 13)
+	version_label.text = "v0.11.1-prueba"
 	for i in range(2):
 		var bar := ProgressBar.new()
 		frame.add_child(bar)
-		bar.position = Vector2(30, 55 + i * 21)
-		bar.size = Vector2(310, 13)
+		bar.position = Vector2(30, 43 + i * 18)
+		bar.size = Vector2(280, 11)
 		bar.show_percentage = false
 		var fill := StyleBoxFlat.new()
 		fill.bg_color = Color(0.9, 0.05, 0.08) if i == 0 else Color(0.1, 0.6, 0.95)

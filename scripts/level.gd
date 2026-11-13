@@ -34,10 +34,14 @@ func _ready() -> void:
 		Geo.box(self, Vector3(x, 3.0, -40), Vector3(5.4, 6, 0.8), panel, true)
 	Geo.box(self, Vector3(0, 6.25, -20), Vector3(5.2, 1.5, 1), panel, true)
 	door = Geo.box(self, Vector3(0, 2.7, -20), Vector3(5, 5.4, 0.5), steel, true)
-	Geo.box(door, Vector3(0, 0, 0.27), Vector3(0.08, 5.2, 0.05), red)
-	Geo.label(self, Vector3(0, 5.8, -19.15), "B01 / CONTENCIÓN", 65)
+	preload("res://scripts/security_door.gd").build(door)
+	for child in door.get_children():
+		if child is CollisionShape3D:
+			child.shape.size.z=.92
+			child.position.z=.20
 	Geo.label(self, Vector3(0, 5.8, -39.15), "NÚCLEO / ELEVADOR", 65)
 	decorate_sector()
+	preload("res://scripts/security_door.gd").surround(self,-20.0)
 	terminals.append(make_terminal(Vector3(-4, 0, -15), "01 / SEGURIDAD"))
 	terminals.append(make_terminal(Vector3(4, 0, -17), "02 / CONTENCIÓN"))
 	exit_terminal = make_terminal(Vector3(0, 0, -53), "ELEVADOR")
