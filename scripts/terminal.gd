@@ -14,8 +14,18 @@ func _ready() -> void:
 	col.shape = shape
 	col.position.y = 0.8
 	add_child(col)
-	Geo.box(self, Vector3(0, 0.8, 0), shape.size, Geo.material(Color(0.08, 0.12, 0.17), 0.6))
-	screen = Geo.box(self, Vector3(0, 1.15, 0.27), Vector3(0.7, 0.5, 0.03), Geo.material(Color(0.02, 0.5, 0.75), 0.2, 1.5))
+	Geo.box(self, Vector3(0, 0.8, 0), shape.size, preload("res://scripts/industrial_materials.gd").metal())
+	screen = Geo.box(self, Vector3(0, 1.15, 0.27), Vector3(0.7, 0.5, 0.03), preload("res://scripts/industrial_materials.gd").screen())
+	var dark := Geo.material(Color(.025,.03,.035),.6)
+	var red := Geo.material(Color(.8,.02,.01),.1,1.7)
+	for x in [-.40,.40]:
+		Geo.box(self,Vector3(x,1.15,.28),Vector3(.07,.65,.07),dark)
+	for y in [.84,1.46]:
+		Geo.box(self,Vector3(0,y,.28),Vector3(.85,.07,.07),dark)
+	for i in range(4):
+		Geo.box(self,Vector3(-.27+i*.18,.66,.29),Vector3(.11,.10,.06),red if i==0 else dark)
+	for i in range(6):
+		Geo.box(self,Vector3(0,.18+i*.048,.27),Vector3(.65,.018,.045),dark)
 	Geo.label(self, Vector3(0, 1.9, 0), title, 30)
 
 func interact() -> void:

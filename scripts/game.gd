@@ -61,16 +61,22 @@ func setup_environment() -> void:
 	environment.background_color = Color(0.005, 0.01, 0.025)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(0.45, 0.55, 0.7)
-	environment.ambient_light_energy = 0.65
+	environment.ambient_light_energy = 0.48
 	preload("res://scripts/character_reflections.gd").apply(environment)
+	# Indoor neutral reflections; local probes capture red fixtures in each sector.
+	var sky_material: ProceduralSkyMaterial = environment.sky.sky_material
+	sky_material.sky_top_color=Color(.10,.12,.16)
+	sky_material.sky_horizon_color=Color(.26,.29,.33)
+	sky_material.ground_bottom_color=Color(.04,.045,.05)
+	sky_material.ground_horizon_color=Color(.20,.22,.25)
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	world.environment = environment
 	add_child(world)
 	var fill := DirectionalLight3D.new()
 	add_child(fill)
 	fill.rotation_degrees = Vector3(-35, -25, 0)
-	fill.light_color = Color(0.6, 0.75, 1.0)
-	fill.light_energy = 0.8
+	fill.light_color = Color(0.84, 0.87, 0.94)
+	fill.light_energy = 0.40
 
 func text_label(parent: Node, position: Vector2, size: int, color := Color(0.7, 0.85, 0.95)) -> Label:
 	var label := Label.new()
@@ -96,7 +102,7 @@ func create_hud() -> void:
 	hud = text_label(frame, Vector2(30, 20), 24)
 	hud.text = "JIBAN // SISTEMAS OPERATIVOS"
 	var version_label := text_label(frame, Vector2(355, 77), 14)
-	version_label.text = "v0.10.3-prueba"
+	version_label.text = "v0.11.0-prueba"
 	for i in range(2):
 		var bar := ProgressBar.new()
 		frame.add_child(bar)
